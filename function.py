@@ -65,22 +65,15 @@ def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', s
     hdulist.close()
     return raw_data,det_id,channel,pulse_width,event_type
 
-def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False):
-    #filename = "/home/hxmt/tuoyl/HXMT_process/archived_data/HE/20170704/merge_1509_select.fits"
-    #hdulist = pf.open(filename)
-    #
-    #tb = hdulist[1].data
-    #raw_data = tb.field(0)
-    #
-    #hdulist.close()
+def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_profile=20):    
     
     #data = raw_data - min(raw_data);data.sort();
     raw_data = data
     #data = data - data[0]
     t_0 = raw_data[0]
     N = len(data)
-    m = 20 # DOF for chi_square test
-    m1 = 20 # profile bin size
+    # bin_cs=20 is DOF for chi_square test
+    # bin_profile=20 is profile bin size
     b = N/m
     f = np.arange(fmin,fmax,fstep) 
     #f1 = np.arange(f1min,f1max,f1step)
@@ -89,15 +82,15 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False):
     
     for i in range(0,len(f)):
         phi_tmp = np.mod(data*f[i] + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
-        p_num = np.histogram(phi_tmp,m)[0]
-        bb = b* np.ones(m)
+        p_num = np.histogram(phi_tmp,bin_cs)[0]
+        bb = b* np.ones(bin_cs)
         chi_square.append(np.sum((p_num-bb)**2)/b)
     
     
         fbest = f[chi_square.index(max(chi_square))]
         phi = np.mod(data*fbest + + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
-        p_num = np.histogram(phi,m1)[0]
-        p_num_x = np.arange(0.,m1,1)/m1
+        p_num = np.histogram(phi,bin_profile)[0]
+        p_num_x = np.arange(0.,bin_profile,1)/bin_profile
     
         p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
         p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
