@@ -23,9 +23,9 @@ def genlc(data,binsize=1,fig=False):
     N = int(N)
     lc = np.histogram(data,N)[0]
     lc_time = np.histogram(data,N)[1][0:-1]
-    null = np.where(lc == 0)
-    lc = np.delete(lc,null)
-    lc_time = np.delete(lc_time,null)
+    #null = np.where(lc == 0)
+    #lc = np.delete(lc,null)
+    #lc_time = np.delete(lc_time,null)
     print null
     if fig:
         plt.figure('light curve')
