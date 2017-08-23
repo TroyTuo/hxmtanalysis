@@ -1,9 +1,5 @@
 from function import *
 import sys 
-try:
-    print sys.argv[2]
-except:
-    print "error"
 
 filename = "/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits"
 hdulist = pf.open(filename)
