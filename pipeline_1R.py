@@ -201,7 +201,7 @@ def hpipe_interface(basedir,outdir):
         
         '''Get auxiliary files and ACS and Orbit files'''
         get_fileinfo(basedir,'/AUX',AUX_fileinfo,topdown=True)
-        get_filename(AUX_fileinfo,'EHK.fits',ehk_name,npos)
+        get_filename(AUX_fileinfo,'EHK_man.fits',ehk_name,npos)
         
         get_fileinfo(basedir,'/ACS',ACS_fileinfo,topdown=True)
         get_filename(ACS_fileinfo,'Orbit',orb_name,npos)
@@ -216,11 +216,12 @@ def hpipe_interface(basedir,outdir):
         print "Input dir: ",basedir
         print "Output dir: ",outdir
         
-        fileid=he_evtname[evtindex]
+        fileid=he_evtname[evtindex][he_evtname[evtindex].find('HXMT_P0101'):he_evtname[evtindex].find('.FITS')]
         print 'fileid',fileid
+        print heconfigname
         para_list_pical=[he_evtname[evtindex],outdir+'/'+fileid+'_pi.fits']
         
-        para_list_hegti=[he_hv[0],he_temp[0],ehk_name[0],outdir+'/'+fileid+'_gti.fits','default','default','default','default','default','default','default','default']
+        para_list_hegti=[he_hv[0],he_temp[0],ehk_name[0],outdir+'/'+fileid+'_gti.fits','default']
         para_list_hescr=[para_list_pical[1],para_list_hegti[3],outdir+'/'+fileid+'_screen.fits','default','default','default','default','default','default','default','default']
 
         para_list_spec=[para_list_hescr[2],outdir+'/'+fileid+'_spec',he_dead[0],'default','default','default']
@@ -255,7 +256,7 @@ def hpipe_interface(basedir,outdir):
         print hescreen
         print hepical_status
         print output
-        [hegenspec_status,output]=commands.getstatusoutput(hegenspec)
+        #[hegenspec_status,output]=commands.getstatusoutput(hegenspec)
         print hegenspec
         print hepical_status
         print output
@@ -385,10 +386,12 @@ if len(sys.argv)==2:
 elif len(sys.argv)>=2:
     basedir=sys.argv[1]
     outdir=sys.argv[2]
+    heconfigname=sys.argv[3]
     hpipe_interface(basedir,outdir)
 else:
     basedir=str(raw_input("Archive data path:"))
     outdir =str(raw_input("Results out path:"))
+    heconfigname=str(raw_input("Configure file path"))
     if len( basedir) == 0:
         print "Please input archive data path!"
         print "Type -h for help"
