@@ -26,7 +26,7 @@ def genlc(data,binsize=1,fig=False):
     #null = np.where(lc == 0)
     #lc = np.delete(lc,null)
     #lc_time = np.delete(lc_time,null)
-    print null
+    #print null
     if fig:
         plt.figure('light curve')
         plt.plot(lc_time,lc)
