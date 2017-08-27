@@ -40,7 +40,7 @@ def genspec(channel):
     return spec_x,spec
 
 # Read data
-def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', sat = 'hxmt'):
+def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', sat = 'hxmt',pi_flag = False):
     print 'file is ',filename
     hdulist = pf.open(filename)
     tb = hdulist[1].data
@@ -53,9 +53,12 @@ def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', s
         channel = tb.field(2)
         pulse_width = tb.field(3)
         event_type = tb.field(5)
-
+        if pi_flag:
+            pi = tb.field(7)
+            return raw_data,det_id,channel,pulse_width,event_type,pi
         hdulist.close()
         return raw_data,det_id,channel,pulse_width,event_type
+
 
     if sat=='fermi' or sat=='FERMI':
         raw_data = tb.field(9)
