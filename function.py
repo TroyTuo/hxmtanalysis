@@ -22,6 +22,7 @@ def genlc(data,binsize=1,fig=False):
     N = (max(data)-min(data))/binsize
     N = int(N)
     lc = np.histogram(data,N)[0]
+    lc = lc/binsize # calculate counts rate instead of counts
     lc_time = np.histogram(data,N)[1][0:-1]
     #null = np.where(lc == 0)
     #lc = np.delete(lc,null)
