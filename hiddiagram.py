@@ -44,5 +44,5 @@ plt.xlabel('time')
 
 plt.plot(time,ratio1,color='r',label='channel0-'+str(channel_cut1)+'/'+str(channel_cut1)+'-'+str(channel_cut2))
 plt.plot(time,ratio2,color='blue',label='channel'+str(channel_cut1)+'-'+str(channel_cut2)+'/'+str(channel_cut2)+'-255')
-plt.legend(loc='bottom left')
+plt.legend(loc='lower left')
 plt.show()
