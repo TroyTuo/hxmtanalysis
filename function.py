@@ -18,11 +18,12 @@ def sel_det(data,det_id,num):
     return det_evt
 
 # generate lc
-def genlc(data,binsize=1,fig=False):
+def genlc(data,binsize=1,fig=False,rate=True):
     N = (max(data)-min(data))/binsize
     N = int(N)
     lc = np.histogram(data,N)[0]
-    lc = lc/binsize # calculate counts rate instead of counts
+    if rate:
+        lc = lc/binsize # calculate counts rate instead of counts
     lc_time = np.histogram(data,N)[1][0:-1]
     #null = np.where(lc == 0)
     #lc = np.delete(lc,null)
@@ -145,6 +146,20 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_pr
 
     return p_num_x_2,p_num_2,f,chi_square
     
+    
+def tical(data,fig=False,binsize=0.00001): # calculate distribution of time interval
+    ti = []
+    data.sort()
+    for i in xrange(len(data)-1):
+        ti.append(data[i+1]-data[i])
+    ti_x,ti_y = genlc(ti,binsize=0.00001,rate=False)
+    if fig:
+        plt.figure('time interval')
+        plt.title('time interval')
+        plt.xlabel('time interval($\mu s$)')
+        plt.ylabel('counts')
+        plt.semilogy(1e6*ti_x,ti_y)
+    return ti_x,ti_y
 
 
 
@@ -154,66 +169,3 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_pr
 
 
 
-
-
-###################################################################
-###################################################################
-#
-#dir = []
-##for line in fileinput.input("merge.lst"):
-##    line = line.strip('\n')
-##    dir.append(line)    
-#
-#filename = "ID301_0002.FITS" 
-#raw_data,det_id,channel,pulse_width,event_type = readdata(filename)
-#
-#for det_num in xrange(18):
-#    time = sel_det(raw_data,det_id,det_num)
-#    
-#    binsize = 0.5 # second
-#    half_window = 10
-#    sigma_cri = []
-#    sigma_cri_x = []
-#    lc_x, lc_y = genlc(time,binsize)
-#    y_smooth = ss.savgol_filter(lc_y, 2*(half_window/binsize)+1, 3)
-#    sigma = calsigma(lc_y,y_smooth)
-#    for i in xrange(len(sigma)):
-#        if sigma[i] >= 5:
-#    
-#            sigma_cri.append(sigma[i])
-#            sigma_cri_x.append(lc_x[i])
-#        
-#    print len(sigma_cri_x)
-#    print binsize*len(sigma_cri)
-#    print max(time)-min(time)
-#    print det_num
-#    plt.subplot(2,1,1)
-#    plt.step(lc_x,lc_y)
-#    plt.plot(lc_x,y_smooth)
-#    plt.subplot(2,1,2)
-#    plt.plot(lc_x,sigma)
-#    for x in sigma_cri_x:
-#        plt.axvline(x,linewidth=0.5,color='r')
-#    plt.savefig("/home/hxmt/tuoyl/HXMT_process/archived_data/HE/spikes_analysis/spike_"+"bin0"+str(int(100*binsize))+"_det_"+str(det_num),dpi=1500)
-#    
-#    for i in xrange(len(sigma_cri_x)):
-#        index_tmp = np.where(lc_x == sigma_cri_x[i])[0][0]
-#        t_spike = lc_x[index_tmp]
-#        plt.figure(str(t_spike))
-#        print index_tmp
-#        cut_x_max = index_tmp + 10/binsize # 10s window
-#        cut_x_min = index_tmp - 10/binsize
-#        print cut_x_max
-#        if cut_x_max >= len(lc_x):cut_x_max = np.where(lc_x == max(lc_x))
-#        if cut_x_min <= 0:cut_x_min = np.where(lc_x == min(lc_x))
-#        plt.step(lc_x[cut_x_min:cut_x_max],lc_y[cut_x_min:cut_x_max])
-#        plt.plot(lc_x[cut_x_min:cut_x_max],y_smooth[cut_x_min:cut_x_max])
-#        plt.savefig("/home/hxmt/tuoyl/HXMT_process/archived_data/HE/spikes_analysis/spike_det"+str(det_num)+"_"+str(i))
-#        print '/home/hxmt/tuoyl/HXMT_process/archived_data/HE/spikes_analysis/spike_'+str(det_num)+".dat"
-#        with open('/home/hxmt/tuoyl/HXMT_process/archived_data/HE/spikes_analysis/spike_'+str(det_num)+".dat",'w') as fids:
-#            for k in xrange(len(lc_x[cut_x_min:cut_x_max])):
-#                wrt_str="%f %f \n"%(lc_x[cut_x_min:cut_x_max][k],lc_y[cut_x_min:cut_x_max][k])
-#                fids.write(wrt_str)
-#        print "#",
-#    
-#    #plt.show()
