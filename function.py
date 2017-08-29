@@ -77,7 +77,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_pr
     N = len(data)
     # bin_cs=20 is DOF for chi_square test
     # bin_profile=20 is profile bin size
-    b = N/m
+    b = N/bin_cs
     f = np.arange(fmin,fmax,fstep) 
     #f1 = np.arange(f1min,f1max,f1step)
     chi_square = []
