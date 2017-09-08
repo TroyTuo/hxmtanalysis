@@ -12,8 +12,8 @@ def calsigma(data,bk):
 # select detector
 def sel_det(data,det_id,num):
     det_evt = [det_id[x] for x in xrange(len(det_id)) if det_id[x]==num]
-    
-    
+
+
    # det_evt = []
    # for i in xrange(len(det_id)):
    #     if det_id[i] == num:
@@ -120,8 +120,8 @@ def readhv(hvfilename,phonum=0):
 
 
 
-def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_profile=20):    
-    
+def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_profile=20):
+
     #data = raw_data - min(raw_data);data.sort();
     raw_data = data
     #data = data - data[0]
@@ -130,28 +130,28 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_pr
     # bin_cs=20 is DOF for chi_square test
     # bin_profile=20 is profile bin size
     b = N/bin_cs
-    f = np.arange(fmin,fmax,fstep) 
+    f = np.arange(fmin,fmax,fstep)
     #f1 = np.arange(f1min,f1max,f1step)
     chi_square = []
-    
-    
+
+
     for i in range(0,len(f)):
         phi_tmp = np.mod(data*f[i] + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
         p_num = np.histogram(phi_tmp,bin_cs)[0]
         bb = b * np.ones(bin_cs)
         chi_square.append(np.sum((p_num-bb)**2)/b)
-    
-    
+
+
         fbest = f[chi_square.index(max(chi_square))]
         phi = np.mod(data*fbest + + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
         p_num = np.histogram(phi,bin_profile)[0]
         p_num_x = np.arange(0.,bin_profile,1)/bin_profile
-    
+
         p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
         p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
         p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
-    
-    
+
+
     #    with open(filename+'_cp_'+str(cut[j])+'_'+str(cut[j+1]),'wt')as file:
     #        for i in range(0,len(chi_square)):
     #            write_str = '%f %f\n'%(f[i],chi_square[i])
@@ -161,7 +161,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_pr
     #        for i in range(0,len(p_num_x_2)):
     #            write_str = '%f %f\n'%(p_num_x_2[i],p_num_2[i])
     #            file.write(write_str)
-    
+
     print "fbest: ",fbest
     print "T: ",1/fbest
    # toa = t_0 + ((1/fbest) * p_num_x[p_num.index(max(p_num))])
@@ -169,7 +169,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_pr
     print "t_0(the very first arrived photon): ",t_0
     #print 'TOA: ',toa
     print "done"
-    
+
     if errorbar:
         errorp = [] # statistic error for profile counts
         for i in xrange(len(p_num)):
@@ -197,8 +197,8 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_pr
 
 
     return p_num_x_2,p_num_2,f,chi_square
-    
-    
+
+
 def tical(data,fig=False,binsize=0.00001): # calculate distribution of time interval
     ti = []
     data.sort()
@@ -220,6 +220,15 @@ def acddel(data,acd):
     selected_data = [data[x] for x in index]
     return selected_data
 
-
+def ehkgen(dir):
+    orbfile = commands.getstatusoutput('ls '+dir+'/ACS/*_Orbit_*')[1]
+    attfile= commands.getstatusoutput('ls '+dir+'/ACS/H*Att*')[1]
+    outfile = dir+"/AUX/EHK.fits"
+    leapfile="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/refdata/leapsec.fits"
+    rigidity="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/refdata/rigidity_20060421.fits"
+    saafile="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/SAA/SAA.fits"
+    text = "hxmtehkgen orbfile="+orbfile+" attfile="+attfile+" outfile="+outfile+" leapfile="+leapfile+" rigidity="+rigidity+" saafile="+saafile+" step_sec=
+    print text
+    os.system(text)
 
 
