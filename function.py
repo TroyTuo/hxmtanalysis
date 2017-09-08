@@ -11,14 +11,17 @@ def calsigma(data,bk):
 
 # select detector
 def sel_det(data,det_id,num):
-    det_evt = []
-    for i in xrange(len(det_id)):
-        if det_id[i] == num:
-            det_evt.append(data[i])
+    det_evt = [det_id[x] for x in xrange(len(det_id)) if det_id[x]==num]
+    
+    
+   # det_evt = []
+   # for i in xrange(len(det_id)):
+   #     if det_id[i] == num:
+   #         det_evt.append(data[i])
     return det_evt
 
 # generate lc
-def genlc(data,binsize=1,fig=False,rate=True):
+def genlc(data,binsize=1,fig=False,rate=True,pannel=True):
     N = (max(data)-min(data))/binsize
     N = int(N)
     lc = np.histogram(data,N)[0]
@@ -30,9 +33,15 @@ def genlc(data,binsize=1,fig=False,rate=True):
     #lc_time = np.delete(lc_time,null)
     #print null
     if fig:
-        plt.figure('light curve')
         plt.plot(lc_time,lc)
-        plt.show()
+    if pannel:
+        # annotation text
+        text = 'Entries = '+str(len(data))+'\n binsize = '+str(binsize)+'\n duration = '+str(max(lc_time)-min(lc_time))
+        plt.annotate(text, xy=(1, 1), xytext=(-15, -15), fontsize=10,
+        xycoords='axes fraction', textcoords='offset points',
+        bbox=dict(facecolor='white', alpha=0.8),
+        horizontalalignment='right', verticalalignment='top')
+
     return lc_time,lc
 
 # generate spec
@@ -42,8 +51,14 @@ def genspec(channel):
     return spec_x,spec
 
 # Read data
-def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', sat = 'hxmt',pi_flag = False):
-    print 'file is ',filename
+def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', sat = 'hxmt',pi_flag = False,quiet = True):
+    """return raw_data,det_id,channel,pulse_width,acd,event_type
+    for 1R level data;
+    return raw_data, for FERMI data;
+    return raw_data,det_id,channel,pulse_width,acd,event_type,pi
+    for 1R level data after pi calculation
+    """
+    if quiet != True:print 'file is ',filename
     hdulist = pf.open(filename)
     tb = hdulist[1].data
 
@@ -54,18 +69,55 @@ def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', s
         det_id = tb.field(1)
         channel = tb.field(2)
         pulse_width = tb.field(3)
+        acd = tb.field(4)
         event_type = tb.field(5)
         if pi_flag:
             pi = tb.field(7)
-            return raw_data,det_id,channel,pulse_width,event_type,pi
+            return raw_data,det_id,channel,pulse_width,acd,event_type,pi
         hdulist.close()
-        return raw_data,det_id,channel,pulse_width,event_type
+        return raw_data,det_id,channel,pulse_width,acd,event_type
 
 
     if sat=='fermi' or sat=='FERMI':
         raw_data = tb.field(9)
         hdulist.close()
         return raw_data
+
+def readehk(ehkfilename):
+    """time,sat_alt,sat_lon,sat_lat,elv,dye_elv,ang_dist,cor,saa_flag,sun_ang,moon_ang"""
+    hdulist = pf.open(ehkfilename)
+    tb = hdulist[1].data
+    time = tb.field(0)
+    sat_alt = tb.field(7)
+    sat_lon = tb.field(8)
+    sat_lat = tb.field(9)
+    elv = tb.field(10)
+    dye_elv = tb.field(11)
+    ang_dist = tb.field(19)
+    cor = tb.field(20)
+    saa_flag = tb.field(22)
+    sun_ang = tb.field(25)
+    moon_ang = tb.field(26)
+    hdulist.close()
+    return time,sat_alt,sat_lon,sat_lat,elv,dye_elv,ang_dist,cor,saa_flag,sun_ang,moon_ang
+
+def readpm(pmfilename,num=0):
+    """time,pm_counts"""
+    hdulist = pf.open(pmfilename)
+    tb = hdulist[1].data
+    time = tb.field(0)
+    pm_cnt = tb.field(num+1)
+    return time,pm_cnt
+
+def readhv(hvfilename,phonum=0):
+    """time,phoDet0-17"""
+    hdulist = pf.open(hvfilename)
+    tb = hdulist[1].data
+    time = tb.field(0)
+    pho_cnt = tb.field(1)
+    hdulist.close()
+    return time,pho_cnt
+
 
 
 def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_profile=20):    
@@ -161,10 +213,12 @@ def tical(data,fig=False,binsize=0.00001): # calculate distribution of time inte
         plt.semilogy(1e6*ti_x,ti_y)
     return ti_x,ti_y
 
-
-
-
-
+def acddel(data,acd):
+    #we exclude events once there is acd triggered
+    acdsum = [ x.sum() for x in acd]
+    index = [x for x in xrange(len(acdsum)) if acdsum[x]>0]
+    selected_data = [data[x] for x in index]
+    return selected_data
 
 
 
