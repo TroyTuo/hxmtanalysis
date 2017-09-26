@@ -1,8 +1,15 @@
+#!/usr/bin/env python
+
 import numpy as np
 import pyfits as pf
 import matplotlib.pyplot as plt
 import scipy.signal as ss
 import fileinput
+import commands
+import os
+import sys
+from time import sleep
+
 
 # sigma of sinal
 def calsigma(data,bk):
@@ -51,7 +58,7 @@ def genspec(channel):
     return spec_x,spec
 
 # Read data
-def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', sat = 'hxmt',pi_flag = False,quiet = True):
+def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', sat = 'hxmt',bary_flag=False,pi_flag = False,quiet = True):
     """return raw_data,det_id,channel,pulse_width,acd,event_type
     for 1R level data;
     return raw_data, for FERMI data;
@@ -71,8 +78,19 @@ def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', s
         pulse_width = tb.field(3)
         acd = tb.field(4)
         event_type = tb.field(5)
+        if bary_flag:
+            raw_data = tb.field(0)
+            tdb = tb.field(1)
+            det_id = tb.field(2)
+            channel = tb.field(3)
+            pulse_width = tb.field(4)
+            acd = tb.field(5)
+            event_type = tb.field(6)
+            hdulist.close()
+            return raw_data,tdb,det_id,channel,pulse_width,acd,event_type
         if pi_flag:
             pi = tb.field(7)
+            hdulist.close()
             return raw_data,det_id,channel,pulse_width,acd,event_type,pi
         hdulist.close()
         return raw_data,det_id,channel,pulse_width,acd,event_type
@@ -107,6 +125,7 @@ def readpm(pmfilename,num=0):
     tb = hdulist[1].data
     time = tb.field(0)
     pm_cnt = tb.field(num+1)
+    hdulist.close()
     return time,pm_cnt
 
 def readhv(hvfilename,phonum=0):
@@ -120,7 +139,7 @@ def readhv(hvfilename,phonum=0):
 
 
 
-def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_profile=20):
+def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_cs=20,bin_profile=20):
 
     #data = raw_data - min(raw_data);data.sort();
     raw_data = data
@@ -150,8 +169,13 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_pr
         p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
         p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
         p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
-
-
+        
+        percent = float(i)*100/len(f)
+        sys.stdout.write(" fsearch complete: %.2f"%percent);
+        sys.stdout.write("%\r");
+        sys.stdout.flush()
+    print '\n'
+    
     #    with open(filename+'_cp_'+str(cut[j])+'_'+str(cut[j+1]),'wt')as file:
     #        for i in range(0,len(chi_square)):
     #            write_str = '%f %f\n'%(f[i],chi_square[i])
@@ -192,9 +216,14 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,bin_cs=20,bin_pr
             plt.subplot(2,1,2)
             plt.plot(f,chi_square)
             plt.show()
-
-
-
+    
+    if pannel:
+        # annotation text
+        text = 'duration = '+str(max(raw_data)-min(raw_data))+'\n bin = '+str(bin_profile)+'\n fbest = '+str(fbest)
+        plt.annotate(text, xy=(1, 1), xytext=(-15, -15), fontsize=10,
+        xycoords='axes fraction', textcoords='offset points',
+        bbox=dict(facecolor='white', alpha=0.8),
+        horizontalalignment='right', verticalalignment='top')
 
     return p_num_x_2,p_num_2,f,chi_square
 
@@ -220,15 +249,47 @@ def acddel(data,acd):
     selected_data = [data[x] for x in index]
     return selected_data
 
-def ehkgen(dir):
-    orbfile = commands.getstatusoutput('ls '+dir+'/ACS/*_Orbit_*')[1]
-    attfile= commands.getstatusoutput('ls '+dir+'/ACS/H*Att*')[1]
-    outfile = dir+"/AUX/EHK.fits"
+def ehkgen(infile_dir,outfile_dir):
+    v2_flag = commands.getoutput('if [ -f '+data_dir+'/ACS/*_Orbit_*V2* ];then ehco 1;else echo 0;fi')                                                      
+    if v2_flag == 1:
+        filename = commands.getoutput('ls ' + data_dir + '/ACS/*_Orbit_*V2*')
+    else:
+        v1_flag = commands.getoutput('if [ -f '+data_dir+'/ACS/*_Orbit_*V1* ];then ehco 1;else echo 0;fi')                                                      
+        if v1_flag == 1:
+            filename = commands.getoutput('ls ' + data_dir + '/ACS/*_Orbit_*V1*')
+        else:
+            orbfile = commands.getstatusoutput('ls '+infile_dir+'/ACS/*_Orbit_*')[1]
+
+    filename = commands.getoutput('ls ' + data_dir + '/ACS/*_V1*')
+    attfile= commands.getstatusoutput('ls '+infile_dir+'/ACS/H*Att*')[1]
+    outfile = outfile_dir+"/AUX/EHK.fits"
     leapfile="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/refdata/leapsec.fits"
     rigidity="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/refdata/rigidity_20060421.fits"
     saafile="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/SAA/SAA.fits"
-    text = "hxmtehkgen orbfile="+orbfile+" attfile="+attfile+" outfile="+outfile+" leapfile="+leapfile+" rigidity="+rigidity+" saafile="+saafile+" step_sec=
+    text = "hxmtehkgen orbfile="+orbfile+" attfile="+attfile+" outfile="+outfile+" leapfile="+leapfile+" rigidity="+rigidity+" saafile="+saafile+" step_sec=1 mean_phi=0.1 mean_theta=0.1 mean_psi=0.1"
     print text
     os.system(text)
 
+def readscreen(filename):
+    hdulist = pf.open(filename)
+    tb = hdulist[1].data
+    time = tb.field(0)
+    pi = tb.field(1)
+    det_id = tb.field(2)
+    hdulist.close()
+    return time,pi,det_id
+
+def readlc(filename):
+    hdulist = pf.open(filename)
+    tb = hdulist[1].data
+    time = tb.field(0)
+    rate = tb.field(1)
+    error = tb.field(2)
+    hdulist.close()
+    return time,rate,error
+
+def smooth(y, box_pts):
+    box = np.ones(box_pts)/box_pts
+    y_smooth = np.convolve(y, box, mode='same')
+    return y_smooth
 
