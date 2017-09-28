@@ -151,30 +151,30 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
     b = N/bin_cs
     f = np.arange(fmin,fmax,fstep)
     #f1 = np.arange(f1min,f1max,f1step)
-    chi_square = []
+    chi_square = [0] * len(f)
 
 
     for i in range(0,len(f)):
         phi_tmp = np.mod(data*f[i] + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
         p_num = np.histogram(phi_tmp,bin_cs)[0]
         bb = b * np.ones(bin_cs)
-        chi_square.append(np.sum((p_num-bb)**2)/b)
+        chi_square[i] = (np.sum((p_num-bb)**2)/b)
 
-
-        fbest = f[chi_square.index(max(chi_square))]
-        phi = np.mod(data*fbest + + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
-        p_num = np.histogram(phi,bin_profile)[0]
-        p_num_x = np.arange(0.,bin_profile,1)/bin_profile
-
-        p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
-        p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
-        p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
-        
         percent = float(i)*100/len(f)
         sys.stdout.write(" fsearch complete: %.2f"%percent);
         sys.stdout.write("%\r");
         sys.stdout.flush()
     print '\n'
+
+    fbest = f[chi_square.index(max(chi_square))]
+    phi = np.mod(data*fbest + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
+    p_num = np.histogram(phi,bin_profile)[0]
+    p_num_x = np.arange(0.,bin_profile,1)/bin_profile
+
+    p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
+    p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
+    p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
+        
     
     #    with open(filename+'_cp_'+str(cut[j])+'_'+str(cut[j+1]),'wt')as file:
     #        for i in range(0,len(chi_square)):
@@ -188,10 +188,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
 
     print "fbest: ",fbest
     print "T: ",1/fbest
-   # toa = t_0 + ((1/fbest) * p_num_x[p_num.index(max(p_num))])
-    #toa = t_0 + ((1/fbest) * p_num_x[np.where(p_num == max(p_num))]
     print "t_0(the very first arrived photon): ",t_0
-    #print 'TOA: ',toa
     print "done"
 
     if errorbar:
