@@ -250,18 +250,17 @@ def acddel(data,acd):
     return selected_data
 
 def ehkgen(infile_dir,outfile_dir):
-    v2_flag = commands.getoutput('if [ -f '+data_dir+'/ACS/*_Orbit_*V2* ];then ehco 1;else echo 0;fi')                                                      
-    if v2_flag == 1:
-        filename = commands.getoutput('ls ' + data_dir + '/ACS/*_Orbit_*V2*')
+    v2_flag = commands.getoutput('if [ -f '+infile_dir+'/ACS/*_Orbit_*V2* ];then echo 1;else echo 0;fi')                                                      
+    if v2_flag == '1':
+        orbfile = commands.getoutput('ls ' + infile_dir + '/ACS/*_Orbit_*V2*')
     else:
-        v1_flag = commands.getoutput('if [ -f '+data_dir+'/ACS/*_Orbit_*V1* ];then ehco 1;else echo 0;fi')                                                      
-        if v1_flag == 1:
-            filename = commands.getoutput('ls ' + data_dir + '/ACS/*_Orbit_*V1*')
+        v1_flag = commands.getoutput('if [ -f '+infile_dir+'/ACS/*_Orbit_*V1* ];then echo 1;else echo 0;fi')                                                      
+        if v1_flag == '1':
+            orbfile = commands.getoutput('ls ' + infile_dir + '/ACS/*_Orbit_*V1*')
         else:
-            orbfile = commands.getstatusoutput('ls '+infile_dir+'/ACS/*_Orbit_*')[1]
+            orbfile = commands.getoutput('ls '+infile_dir+'/ACS/*_Orbit_*')
 
-    filename = commands.getoutput('ls ' + data_dir + '/ACS/*_V1*')
-    attfile= commands.getstatusoutput('ls '+infile_dir+'/ACS/H*Att*')[1]
+    attfile= commands.getoutput('ls '+infile_dir+'/ACS/H*Att*')
     outfile = outfile_dir+"/AUX/EHK.fits"
     leapfile="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/refdata/leapsec.fits"
     rigidity="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/refdata/rigidity_20060421.fits"
