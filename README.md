@@ -62,18 +62,7 @@ Example.  From a event file screened by good time file, create a lightcurve
         
 ### hegenspec
 
-This task produces spectrum, from data screened by good time event       file. It is similar to hegenlc (see hegenlc). The standard plot output 
-    is counts/s versus channel. Multiple spectrum pha files will be generated 
-    while multiple detectors are selected. Like hegenlc process, The FITS file 
-    of spectrum have the outfile name as prefix, and detector number in the 
-    middle ,and ".pha" as suffix. Each detector has only one spectrum FITS 
-    file. This is the reason that parameter clobber does not work here (see 
-    PARAMETER clobber). It is IMPORTANT to ensure that files that have same 
-    names with outfile do not exist. The good time intervals for each detector 
-    is written in outfile.
-    Exposure time and total spectrum accumulation time will be read from 
-    dead time file and printed on. And live time divided by total exposure 
-    time will be calculated can printed on screen as well.
+This task produces spectrum, from data screened by good time event file. It is similar to hegenlc (see hegenlc). The standard plot output is counts/s versus channel. Multiple spectrum pha files will be generated while multiple detectors are selected. Like hegenlc process, The FITS file  of spectrum have the outfile name as prefix, and detector number in the middle ,and ".pha" as suffix. Each detector has only one spectrum FITS file. This is the reason that parameter clobber does not work here (see PARAMETER clobber). It is IMPORTANT to ensure that files that have same names with outfile do not exist. The good time intervals for each detector is written in outfile. Exposure time and total spectrum accumulation time will be read from dead time file and printed on. And live time divided by total exposure time will be calculated can printed on screen as well.
 
 Example. From a event file screened by good time file, create a spectrum 
     for detector 0, 1, 3, 5, with default start and stop time range. 
