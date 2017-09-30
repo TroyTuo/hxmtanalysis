@@ -25,14 +25,11 @@ This task creates a GTI table filtered by a subset of times in input HK high vol
 
 Example. 1. Generate the GTI FITS file he_gti.fit using default expression in "HEParamConfig.fits".
     
-        `> hegtigen hvfile=HV.FITS tempfile=Th.FITS outfile=he_gti.fits 
-        ehkfile=ehk.fits defaultexpr=yes`
+`> hegtigen hvfile=HV.FITS tempfile=Th.FITS outfile=he_gti.fits ehkfile=ehk.fits defaultexpr=yes`
     
 Example. 2. Generate the GTI FITS file he_gti.fis by inputting parameters manually.
         
-        `> hegtigen hvfile=HV.FITS tempfile=TH.FITS outfile=he_gti.fits 
-        ehkfile=ehk.fits defaultexpr=no ELV=10 COR=0 SAA=yes T_SAA=10 
-        TN_SAA=10 SUN_ANGLE=10 MOON_ANGLE=10 ANG_DIST=0.2 clobber=yes`
+`> hegtigen hvfile=HV.FITS tempfile=TH.FITS outfile=he_gti.fits ehkfile=ehk.fits defaultexpr=no ELV=10 COR=0 SAA=yes T_SAA=10 TN_SAA=10 SUN_ANGLE=10 MOON_ANGLE=10 ANG_DIST=0.2 clobber=yes`
         
 ### hescreen
 
@@ -41,8 +38,7 @@ This task will screen those time intervals selected by good time file. If there 
 Example.  Process an screened event file, using GTI file, for all detectors. 
     bad detector file and anticoincidence are null.
     
-        `> hescreen evtfile="he_pi.fits" gtifile="he_gti.fits" 
-        outfile="he_screen.fits" detid=ALL eventtype=0 anticoincidence=""`
+`> hescreen evtfile="he_pi.fits" gtifile="he_gti.fits" outfile="he_screen.fits" detid=ALL eventtype=0 anticoincidence=""`
         
 ### hegenlc
 
@@ -62,8 +58,7 @@ Example.  From a event file screened by good time file, create a lightcurve
     for detector 0, 5, with a binning of 1 seconds and default start and 
     stop time range. 
     
-       `> hegenlc evtfile=he_screen.fits outfile=lc deadfile=DTime.FITS 
-        starttime=0 stoptime=0 binsize=1 detid="0 5" channel="pi>0"`
+`> hegenlc evtfile=he_screen.fits outfile=lc deadfile=DTime.FITS starttime=0 stoptime=0 binsize=1 detid="0 5" channel="pi>0"`
         
 ### hegenspec
 
@@ -84,8 +79,7 @@ Example.  From a event file screened by good time file, create a lightcurve
 Example. From a event file screened by good time file, create a spectrum 
     for detector 0, 1, 3, 5, with default start and stop time range. 
     
-        `> hegenspec evtfile=he_screen.fits outfile=pha deadfile=deadtime.FITS 
-        starttime=0 stoptime=0 detid="0 1 3 5"`
+`> hegenspec evtfile=he_screen.fits outfile=pha deadfile=deadtime.FITS starttime=0 stoptime=0 detid="0 1 3 5"`
         
         
 ## the usage of Python Toolkit
