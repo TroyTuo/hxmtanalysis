@@ -1,19 +1,19 @@
 # A python Toolkit for HXMT data analysis
 
 
-## the usage of HXMT software
+## The usage of HXMT software
 
 
 **NOTE: Only the software for High Energy detector is introduced below.**
 
 
-*Before utilizing this toolkit, a HXMT software package should be installed([download page](http://www.hxmt.org/index.php/dataan/2013-03-22-08-13-10)).*
+*Before utilizing this toolkit, an HXMT software package should be installed([download page](http://www.hxmt.org/index.php/dataan/2013-03-22-08-13-10)).*
 
-A full description of the usage of HXMT software can be found in fhelp document while it is well installed. The complete prosedures including three steps: PI calculationg, selection of good time intervals, producing data production(light curve, background and spectrum files).
+A full description of the usage of HXMT software can be found in fhelp document while it is well installed. The complete procedures including three steps: PI calculation, selection of good time intervals, producing data production(light curve, background and spectrum files).
 
 ### hepical
 
-The task will simply do the PI calculation from the  channel column of input event file.
+The task carries out the PI calculation from the  channel column of input event file.
 
 Example. Process an HE event file with PI column, "infile," using the defaults to calculate the PI values. 
     
@@ -21,7 +21,7 @@ Example. Process an HE event file with PI column, "infile," using the defaults t
 
 ### hegtigen
 
-This task creates a GTI table filtered by a subset of times in input HK high voltage FITS file, HK temperature FITS file, and EHK event file. Filtering parameters are written in "HEParamConfig.fits" file. And they can be read by setting PARAMETERS defaultexpr=yes (see PARAMETERS defaultexpr below), otherwise can be manually inputted by users (see HE Selection Expression below). The output GTI file contains good time intervals for all HE detectors.
+This task creates a GTI table filtered by a subset of times in input HK high voltage FITS file, HK temperature FITS file, and EHK event file. Filtering parameters are written in "HEParamConfig.fits" file. Also, they can be read by setting PARAMETERS defaultexpr=yes (see PARAMETERS defaultexpr below), otherwise can be manually inputted by users (see HE Selection Expression below). The output GTI file contains good time intervals for all HE detectors.
 
 Example. 1. Generate the GTI FITS file he_gti.fit using default expression in "HEParamConfig.fits".
     
@@ -33,10 +33,9 @@ Example. 2. Generate the GTI FITS file he_gti.fis by inputting parameters manual
         
 ### hescreen
 
-This task will screen those time intervals selected by good time file. If there is a bad detector, it will screen event file by bad detector file. Anticoincidence detector can be selected as well.
+This task screens out those time intervals selected by good time file. If there is a bad detector, it screens out event file by bad detector file. Anticoincidence detector can be chosen as well.
 
-Example.  Process an screened event file, using GTI file, for all detectors. 
-    bad detector file and anticoincidence are null.
+Example.  Process a screened event file, using GTI file, for all detectors. Bad detector file and anticoincidence are null.
     
 `> hescreen evtfile="he_pi.fits" gtifile="he_gti.fits" outfile="he_screen.fits" detid=ALL eventtype=0 anticoincidence=""`
         
@@ -47,8 +46,8 @@ This task produces lightcurves, from data screened by good time event
     hescreen) , and is constrained by dead time file. Input data can be 
     rebinned, and the standard plot output is counts/s versus time. Multiple
     lightcurves of selected detectors can be generated in one process. 
-    The FITS file of lightcurves have the outfile name as prefix, and 
-    detector number in the middle ,and ".lc" as suffix. Each detector has 
+    The FITS file of lightcurves has the outfile name as prefix, and 
+    detector number in the middle ,and ".lc" as a suffix. Each detector has 
     only one lightcurve FITS file. This is the reason that parameter clobber 
     does not work here (see PARAMETER clobber). It is IMPORTANT to ensure 
     the files have same names with outfile do not exist. The good time 
@@ -62,7 +61,7 @@ Example.  From a event file screened by good time file, create a lightcurve
         
 ### hegenspec
 
-This task produces spectrum, from data screened by good time event file. It is similar to hegenlc (see hegenlc). The standard plot output is counts/s versus channel. Multiple spectrum pha files will be generated while multiple detectors are selected. Like hegenlc process, The FITS file  of spectrum have the outfile name as prefix, and detector number in the middle ,and ".pha" as suffix. Each detector has only one spectrum FITS file. This is the reason that parameter clobber does not work here (see PARAMETER clobber). It is IMPORTANT to ensure that files that have same names with outfile do not exist. The good time intervals for each detector is written in outfile. Exposure time and total spectrum accumulation time will be read from dead time file and printed on. And live time divided by total exposure time will be calculated can printed on screen as well.
+This task produces the spectrum, from data screened by good time event file. It is similar to hegenlc (see hegenlc). The standard plot output is counts/s versus channel. Multiple spectrum pha files will be generated while multiple detectors are selected. Like hegenlc process, The FITS file  of the spectrum has the outfile name as a prefix, and detector number in the middle ,and ".pha" as suffix. Each detector has only one spectrum FITS file. This is the reason that parameter clobber does not work here (see PARAMETER clobber). It is IMPORTANT to ensure that files that have same names with outfile do not exist. The good time intervals for each detector is written in outfile. Exposure time and total spectrum accumulation time will be read from dead time file and printed on the screen. And live time divided by total exposure time will be calculated can printed on the screen as well.
 
 Example. From a event file screened by good time file, create a spectrum 
     for detector 0, 1, 3, 5, with default start and stop time range. 
@@ -70,7 +69,9 @@ Example. From a event file screened by good time file, create a spectrum
 `> hegenspec evtfile=he_screen.fits outfile=pha deadfile=deadtime.FITS starttime=0 stoptime=0 detid="0 1 3 5"`
         
         
-## the usage of Python Toolkit
+## The usage of Python Toolkit
+
+under construction 
    
 
 
