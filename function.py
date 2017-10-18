@@ -43,7 +43,7 @@ def genlc(data,binsize=1,fig=False,rate=True,pannel=True):
         plt.plot(lc_time,lc)
     if pannel:
         # annotation text
-        text = 'Entries = '+str(len(data))+'\n binsize = '+str(binsize)+'\n duration = '+str(max(lc_time)-min(lc_time))
+        text = 'Entries = '+str(len(data))+'\n binsize = '+str(binsize)+'\n duration = '+str(max(data) - min(data))
         plt.annotate(text, xy=(1, 1), xytext=(-15, -15), fontsize=10,
         xycoords='axes fraction', textcoords='offset points',
         bbox=dict(facecolor='white', alpha=0.8),
@@ -53,14 +53,16 @@ def genlc(data,binsize=1,fig=False,rate=True,pannel=True):
 
 # generate spec
 def genspec(channel):
-    spec = np.histogram(channel,255)[0]
-    spec_x = np.linspace(0,255,256)[0:-1]
+    ''' return spec_x, spec'''
+    spec = np.histogram(channel,255-min(channel))[0]
+    spec_x = np.histogram(channel,255-min(channel))[1][0:-1]
     return spec_x,spec
 
 # Read data
 def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', sat = 'hxmt',bary_flag=False,pi_flag = False,quiet = True):
     """return raw_data,det_id,channel,pulse_width,acd,event_type
     for 1R level data;
+    bary_flag: raw_data,tdb,det_id,channel,pulse_width,acd,event_type
     return raw_data, for FERMI data;
     return raw_data,det_id,channel,pulse_width,acd,event_type,pi
     for 1R level data after pi calculation
@@ -81,13 +83,11 @@ def readdata(filename='/Users/tuoyouli/Desktop/fermi_toa/data/bary_1deg.fits', s
         if bary_flag:
             raw_data = tb.field(0)
             tdb = tb.field(1)
-            det_id = tb.field(2)
-            channel = tb.field(3)
-            pulse_width = tb.field(4)
-            acd = tb.field(5)
-            event_type = tb.field(6)
+            channel = tb.field(2)
+            det_id = tb.field(3)
+            source = tb.field(4)
             hdulist.close()
-            return raw_data,tdb,det_id,channel,pulse_width,acd,event_type
+            return raw_data,tdb,channel,det_id,source
         if pi_flag:
             pi = tb.field(7)
             hdulist.close()
@@ -158,33 +158,22 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
         phi_tmp = np.mod(data*f[i] + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
         p_num = np.histogram(phi_tmp,bin_cs)[0]
         bb = b * np.ones(bin_cs)
-        chi_square[i] = (np.sum((p_num-bb)**2)/b)
+        chi_square[i] = np.sum((p_num-bb)**2)/b
 
         percent = float(i)*100/len(f)
         sys.stdout.write(" fsearch complete: %.2f"%percent);
         sys.stdout.write("%\r");
         sys.stdout.flush()
     print '\n'
-
     fbest = f[chi_square.index(max(chi_square))]
     phi = np.mod(data*fbest + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
-    p_num = np.histogram(phi,bin_profile)[0]
+    p_num = np.histogram(phi,bin_profile)[0]/np.mean(p_num)
+    #p_num = p_num/(max(data)-min(data))
     p_num_x = np.arange(0.,bin_profile,1)/bin_profile
 
     p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
     p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
     p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
-        
-    
-    #    with open(filename+'_cp_'+str(cut[j])+'_'+str(cut[j+1]),'wt')as file:
-    #        for i in range(0,len(chi_square)):
-    #            write_str = '%f %f\n'%(f[i],chi_square[i])
-    #            file.write(write_str)
-    #
-    #    with open(filename+'_profile_'+str(cut[j])+'_'+str(cut[j+1]),'wt')as file:
-    #        for i in range(0,len(p_num_x_2)):
-    #            write_str = '%f %f\n'%(p_num_x_2[i],p_num_2[i])
-    #            file.write(write_str)
 
     print "fbest: ",fbest
     print "T: ",1/fbest
@@ -216,7 +205,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
     
     if pannel:
         # annotation text
-        text = 'duration = '+str(max(raw_data)-min(raw_data))+'\n bin = '+str(bin_profile)+'\n fbest = '+str(fbest)
+        text = 'duration = '+str(max(raw_data)-min(raw_data))+'\n Entries ='+str(len(data))+'\n bin = '+str(bin_profile)+'\n fbest = '+str(fbest)
         plt.annotate(text, xy=(1, 1), xytext=(-15, -15), fontsize=10,
         xycoords='axes fraction', textcoords='offset points',
         bbox=dict(facecolor='white', alpha=0.8),
