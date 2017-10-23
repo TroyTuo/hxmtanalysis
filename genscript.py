@@ -14,4 +14,5 @@ with open(filename,'r')as f:
 file = file.split('\n')[0:-1]
 with open(filename+'_script.sh','w')as f:
     for i in file:
-        write_str = 'python   
+        write_str = '%s %s\n'%(i,i)
+        f.write(write_str)
