@@ -12,6 +12,8 @@ parser.add_argument("-f","--fig",action="store_true",help="plot space craft data
 parser.add_argument("--rangefile",action="store_true",help="rangefile path of hegtigen is $hxmtanalysis")
 parser.add_argument("--clobber",action="store_true",help="excute hegtigen and hescreen and overwrite existing gti or screens files")
 parser.add_argument("--hxbary",action="store_true",help="carry out hxbary and copy Evt file to local directory")
+parser.add_argument("-r","--ra",help="right ascension of barycentering correction",type=float)
+parser.add_argument("-d","--dec",help="declination of barycentering correction",type=float)
 args = parser.parse_args()
 data_dir = args.input
 product_dir = args.output
@@ -53,6 +55,7 @@ hvfilename = commands.getoutput('ls ' + data_dir + '/HE/HXMT*HV_FFFFFF*')
 pmfilename = commands.getoutput('ls ' + data_dir + '/HE/HXMT*PM_FFFFFF*')
 deadfilename = commands.getoutput('ls ' + data_dir + '/HE/HXMT*DTime*')
 tempfilename = commands.getoutput('ls ' + data_dir + '/HE/HXMT*TH*')
+preciseorbitname = commands.getoutput('ls ' + data_dir + '/ACS/*Precise*')
 
 print filename
 print orbitname
@@ -96,7 +99,9 @@ if args.hxbary:
     print cphead_text
     os.system(cphead_text)
     # carry out hxbary
-    hxbary_text = 'hxbary '+he_dir+'he_screen.fits '+orbitname+' 228.48175 -59.135822 2'
+    ra = args.ra
+    dec = args.dec
+    hxbary_text = 'hxbary' + ' ' + he_dir + 'he_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
     print hxbary_text
     os.system(hxbary_text)
 
