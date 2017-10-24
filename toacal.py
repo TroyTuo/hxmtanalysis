@@ -1,8 +1,15 @@
+#!/usr/bin/env python
 from function import fsearch
 from function import pf
 from function import plt
 from function import np
 from argparse import ArgumentParser
+'''
+a pulsar f search program
+Usage: python toacal.py --all --cut
+--all: for all Events data; --cut: for TOA calculation of time intervals 
+'''
+
 tstep = 100
 hdulist = pf.open('he_screen.fits')
 tb = hdulist[1].data
