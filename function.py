@@ -278,3 +278,14 @@ def smooth(y, box_pts):
     y_smooth = np.convolve(y, box, mode='same')
     return y_smooth
 
+def ccf(f1,f2):
+    '''f1 is the original signal
+       f2 is probe signal(shift and test)'''
+    mean_f1 = np.mean(f1)
+    mean_f2 = np.mean(f2)
+    delta_f1 = f1 - mean_f1
+    delta_f2 = f2 - mean_f2
+    sigma_f1 = np.sqrt(np.sum([x**2 for x in f1]))
+    sigma_f2 = np.sqrt(np.sum([x**2 for x in f2]))
+    y = [ np.sum(delta_f1 * np.roll(delta_f2,x))/(sigma_f1 * sigma_f2) for x in xrange(len(f2)) ]
+    return y
