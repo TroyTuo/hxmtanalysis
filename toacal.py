@@ -3,15 +3,16 @@ from function import fsearch
 from function import pf
 from function import plt
 from function import np
+from function import ccf
 from argparse import ArgumentParser
 '''
 a pulsar f search program
 Usage: python toacal.py --all --cut
---all: for all Events data; --cut: for TOA calculation of time intervals 
+--all: for all Events data; --cut: for TOA calculation of time intervals
 '''
 
-tstep = 100
-hdulist = pf.open('he_screen.fits')
+tstep = 7200
+hdulist = pf.open('1509_screen.fits')
 tb = hdulist[1].data
 screen_data = tb.field(0)
 screen_tdb = tb.field(4)
@@ -39,26 +40,26 @@ if args.all:
     plt.figure()
     print "################## step two ####################"
     f0 = 29.6406
-    f1 = -3.68657e-10
-    f1 = 3.69545463395236e-08
+    f0 = 6.582
+    f1 = -6.7695e-11
     f2 = 1.9587e-21
-    fmax = f0 + 1e-2
-    fmin = f0 - 1e-2
+    fmax = f0 + 1e-3
+    fmin = f0 - 1e-4
     fstep = 0.5e-4
     tdb = screen_tdb
     raw_data = screen_data
     t0 = data_new[1]
-    t0 = 178430735.001
     data = tdb - t0
 
     print fmin,fmax
     plt.subplot(2,1,1)
     p_x,p,f,chi_square = fsearch(data,fmin,fmax,f1,0,fstep,errorbar=False,fig=False,pannel=False,bin_cs=20,bin_profile=10)
     fbest = f[chi_square.index(max(chi_square))]
+    profile_tot = p
     toa = min(raw_data) + ((1/fbest) * p_x[p.index(max(p))])
     toa = t0 + ((1/fbest) * p_x[p.index(max(p))])
     print 'toa: ',toa
-    print min(raw_data)
+    print t0
     plt.plot(p_x,p)
     min_profile_line = [ p_x[x] for x in xrange(len(p)) if p[x]==min(p) ]
     #for i in min_profile_line:
@@ -84,7 +85,6 @@ if args.cut:
         raw_data = screen_data[tindex0+1:tindex1-1]
 
         t0 = data_new[tindex0+1]
-        t0 = 178430735.001
 
         #select baried data
         print "################## step one ####################"
@@ -95,11 +95,11 @@ if args.cut:
         data = tdb - t0
 
         print "################## step two ####################"
-        f0 = 29.6406
-        f1 = -3.68657e-10
+        f0 = 6.582
+        f1 = -6.795e-11
         f2 = 1.9587e-21
-        fmax = f0 + 1e-2
-        fmin = f0 - 1e-2
+        fmax = f0 + 1e-3
+        fmin = f0 - 1e-3
         fstep = 0.5e-4
 
         print fmin,fmax
@@ -107,10 +107,16 @@ if args.cut:
         plt.subplot(2,1,1)
         p_x,p,f,chi_square = fsearch(data,fmin,fmax,f1,0,fstep,errorbar=False,fig=False,pannel=False,bin_cs=20,bin_profile=10)
         fbest = f[chi_square.index(max(chi_square))]
+        # CCF correction for toa
+        profile_temp = p
+        delay = max(ccf(profile_tot,profile_temp))[0]
+        profile_temp = np.roll(profile_tot,delay)
+        ########################
         toa = min(raw_data) + ((1/fbest) * p_x[p.index(max(p))])
         toa = t0 + ((1/fbest) * p_x[p.index(max(p))])
+        toa = t0 + ((1/fbest) * p_x[profile_temp.index(max(profile_temp))])
         print 'toa: ',toa
-        print min(raw_data)
+        print t0
         plt.plot(p_x,p)
         min_profile_line = [ p_x[x] for x in xrange(len(p)) if p[x]==min(p) ]
         #for i in min_profile_line:
