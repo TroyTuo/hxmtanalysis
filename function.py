@@ -225,7 +225,7 @@ def pfold(data,f0,f1,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0):
     fbest = f0
     phi = np.mod(data*fbest + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
     p_num = np.histogram(phi,bin_profile)[0]
-    p_num = p_num/np.mean(p_num) # Normalization
+    p_num = p_num/np.sum(p_num,dtype=np.float) # Normalization
     p_num_x = np.arange(0.,bin_profile,1)/bin_profile
 
     p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
