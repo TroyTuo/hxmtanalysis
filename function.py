@@ -167,7 +167,8 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
     print '\n'
     fbest = f[chi_square.index(max(chi_square))]
     phi = np.mod(data*fbest + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
-    p_num = np.histogram(phi,bin_profile)[0]/np.mean(p_num)
+    p_num = np.histogram(phi,bin_profile)[0]
+    p_num = p_num/np.mean(p_num)
     #p_num = p_num/(max(data)-min(data))
     p_num_x = np.arange(0.,bin_profile,1)/bin_profile
 
@@ -202,7 +203,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
             plt.subplot(2,1,2)
             plt.plot(f,chi_square)
             plt.show()
-    
+
     if pannel:
         # annotation text
         text = 'duration = '+str(max(raw_data)-min(raw_data))+'\n Entries ='+str(len(data))+'\n bin = '+str(bin_profile)+'\n fbest = '+str(fbest)
@@ -213,6 +214,25 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
 
     return p_num_x_2,p_num_2,f,chi_square
 
+def pfold(data,f0,f1,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0):
+
+    raw_data = data
+    if t0 == 0:
+        t_0 = raw_data[0]
+    N = len(data)
+    b = N/bin_cs
+
+    fbest = f0
+    phi = np.mod(data*fbest + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
+    p_num = np.histogram(phi,bin_profile)[0]
+    p_num = p_num/np.mean(p_num) # Normalization
+    p_num_x = np.arange(0.,bin_profile,1)/bin_profile
+
+    p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
+    p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
+    p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
+
+    return p_num_x_2,p_num_2
 
 def tical(data,fig=False,binsize=0.00001): # calculate distribution of time interval
     ti = []
@@ -236,11 +256,11 @@ def acddel(data,acd):
     return selected_data
 
 def ehkgen(infile_dir,outfile_dir):
-    v2_flag = commands.getoutput('if [ -f '+infile_dir+'/ACS/*_Orbit_*V2* ];then echo 1;else echo 0;fi')                                                      
+    v2_flag = commands.getoutput('if [ -f '+infile_dir+'/ACS/*_Orbit_*V2* ];then echo 1;else echo 0;fi')
     if v2_flag == '1':
         orbfile = commands.getoutput('ls ' + infile_dir + '/ACS/*_Orbit_*V2*')
     else:
-        v1_flag = commands.getoutput('if [ -f '+infile_dir+'/ACS/*_Orbit_*V1* ];then echo 1;else echo 0;fi')                                                      
+        v1_flag = commands.getoutput('if [ -f '+infile_dir+'/ACS/*_Orbit_*V1* ];then echo 1;else echo 0;fi')
         if v1_flag == '1':
             orbfile = commands.getoutput('ls ' + infile_dir + '/ACS/*_Orbit_*V1*')
         else:
