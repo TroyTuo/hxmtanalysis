@@ -8,6 +8,7 @@ import fileinput
 import commands
 import os
 import sys
+import glob
 from time import sleep
 
 
@@ -267,6 +268,7 @@ def ehkgen(infile_dir,outfile_dir):
             orbfile = commands.getoutput('ls '+infile_dir+'/ACS/*_Orbit_*')
 
     attfile= commands.getoutput('ls '+infile_dir+'/ACS/H*Att*')
+    attfile = glob.glob(infile_dir+'/ACS/H*Att*')[0]
     outfile = outfile_dir+"/AUX/EHK.fits"
     leapfile="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/refdata/leapsec.fits"
     rigidity="/hxmt/home/hxmtsoft/hxmtehkgen/hxmtehkgen/refdata/rigidity_20060421.fits"
