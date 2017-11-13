@@ -2,6 +2,7 @@
 
 from function import *
 import argparse
+import glob
 
 # find and create data dir list
 
@@ -35,27 +36,75 @@ print he_dir
 print ehkfilename
 
 #read filenames
-v2_flag = commands.getoutput('if [ -f '+data_dir+'/HE/*HE-Evt_FFFFFF_V2* ];then echo 1;else echo 0;fi')
-if v2_flag == '1':
-    filename = commands.getoutput('ls ' + data_dir + '/HE/*HE-Evt_FFFFFF_V2*')
-else:
-    filename = commands.getoutput('ls ' + data_dir + '/HE/*HE-Evt_FFFFFF_V1*')
-
-v2_flag = commands.getoutput('if [ -f '+data_dir+'/ACS/*_Orbit_*V2* ];then echo 1;else echo 0;fi')
-if v2_flag == '1':
-    orbitname = commands.getoutput('ls ' + data_dir + '/ACS/*_Orbit_*V2*')
-else:
-    v1_flag = commands.getoutput('if [ -f '+data_dir+'/ACS/*_Orbit_*V1* ];then echo 1;else echo 0;fi')
-    if v1_flag == '1':
-        orbitname = commands.getoutput('ls ' + data_dir + '/ACS/*_Orbit_*V1*')
-    else:
-        orbitname = commands.getoutput('ls '+data_dir+'/ACS/*_Orbit_*')
+#v2_flag = commands.getoutput('if [ -f '+data_dir+'/HE/*HE-Evt_FFFFFF_V2* ];then echo 1;else echo 0;fi')
+#if v2_flag == '1':
+#    filename = commands.getoutput('ls ' + data_dir + '/HE/*HE-Evt_FFFFFF_V2*')
+filename = glob.glob(data_dir + '/HE/*HE-Evt_FFFFFF_V*')[0]
+#filename_temp.sort()
+#if filename_temp[-1] == glob.glob(data_dir + '/HE/*HE-Evt_FFFFFF_VU')[0]:
+#    filename = filename_temp[-2]
+#else:
+#    filename = filename_temp[-1]
+#else:
+#    filename = commands.getoutput('ls ' + data_dir + '/HE/*HE-Evt_FFFFFF_V1*')
+#
+#v2_flag = commands.getoutput('if [ -f '+data_dir+'/ACS/*_Orbit_*V2* ];then echo 1;else echo 0;fi')
+#if v2_flag == '1':
+#    orbitname = commands.getoutput('ls ' + data_dir + '/ACS/*_Orbit_*V2*')
+orbitname = glob.glob(data_dir + '/ACS/*_Orbit_*V*')[0]
+#orbitname_temp.sort()
+#if orbitname_temp[-1] == glob.glob(data_dir + '/ACS/*_Orbit_*VU')[0]:
+#    orbitname = orbitname_temp[-2]
+#else:
+#    orbitname = orbitname_temp[-1]
+#else:
+#    v1_flag = commands.getoutput('if [ -f '+data_dir+'/ACS/*_Orbit_*V1* ];then echo 1;else echo 0;fi')
+#    if v1_flag == '1':
+#        orbitname = commands.getoutput('ls ' + data_dir + '/ACS/*_Orbit_*V1*')
+#    else:
+#        orbitname = commands.getoutput('ls '+data_dir+'/ACS/*_Orbit_*')
 
 hvfilename = commands.getoutput('ls ' + data_dir + '/HE/HXMT*HV_FFFFFF*')
-pmfilename = commands.getoutput('ls ' + data_dir + '/HE/HXMT*PM_FFFFFF*')
+hvfilename = glob.glob(data_dir + '/HE/HXMT*HV_FFFFFF*')[0]
+#hvfilename_temp.sort()
+#if hvfilename_temp[-1] == glob.glob(data_dir + '/HE/HXMT*HV_FFFFFF_VU*')[0]:
+#    hvfilename = hvfilename[-2]
+#else:
+#    hvfilename = hvfilename[-1]
+
+pmfilename = commands.getoutput('ls ' + data_dir + '/HE/HXMT*PM_FFFFFF*')[0]
+#pmfilename_temp = glob.glob(data_dir + '/HE/HXMT*PM_FFFFFF*')
+#pmfilename_temp.sort()
+#if pmfilename_temp[-1] == glob.glob(data_dir + '/HE/HXMT*PM_FFFFFF_VU*')[0]:
+#    pmfilename = pmfilename_temp[-2]
+#else:
+#    pmfilename = pmfilename_temp[-1]
+
+
 deadfilename = commands.getoutput('ls ' + data_dir + '/HE/HXMT*DTime*')
+deadfilename = glob.glob(data_dir + '/HE/HXMT*DTime*')[0]
+#deadfilename_temp.sort()
+#if deadfilename_temp[-1] == glob.glob(data_dir + '/HE/HXMT*DTime_FFFFFF_VU*')[0]:
+#    deadfilename = deadfilename_temp[-2]
+#else:
+#    deadfilename = deadfilename_temp[-1]
+
 tempfilename = commands.getoutput('ls ' + data_dir + '/HE/HXMT*TH*')
+tempfilename = glob.glob(data_dir + '/HE/HXMT*TH*')[0]
+#tempfilename_temp.sort()
+#if tempfilename_temp[-1] == glob.glob(data_dir + '/HE/HXMT*TH_FFFFFF_VU*')[0]:
+#    tempfilename = tempfilename_temp[-2]
+#else:
+#    tempfilename = tempfilename_temp[-1]
+
+
 preciseorbitname = commands.getoutput('ls ' + data_dir + '/ACS/*Precise*')
+preciseorbitname = glob.glob(data_dir + '/ACS/*Precise*')[0]
+#preciseorbitname_temp.sort()
+#if preciseorbitname_temp[-1] == glob.glob(data_dir + '/ACS/*Precise*_VU*')[0]:
+#    preciseorbitname = preciseorbitname_temp[-2]
+#else:
+#    preciseorbitname = preciseorbitname_temp[-1]
 
 print filename
 print orbitname
