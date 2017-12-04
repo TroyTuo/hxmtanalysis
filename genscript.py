@@ -17,7 +17,7 @@ path_pipeline = "he_pipeline.py"
 with open(filename,'r')as f:
     file = f.read()
 file = file.split('\n')[0:-1]
-file = [ x[x.index('/P01'):-1] for x in file ]
+file = [ x[x.index('P01'):-1] for x in file ]
 print file
 new_filename = filename[0:filename.index('.lst')]
 with open(new_filename+'_script.sh','w')as f:
