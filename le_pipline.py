@@ -66,7 +66,7 @@ def ehkgen(infile_dir,outfile_dir):
     text = "hxmtehkgen orbfile="+orbfile+" attfile="+attfile+" outfile="+outfile+" leapfile="+leapfile+" rigidity="+rigidity+" saafile="+saafile+" step_sec=1 mean_phi=0.1 mean_theta=0.1 mean_psi=0.1 clobber=yes"
     print text
     os.system(text)
-#ehkgen(data_dir,product_dir)
+ehkgen(data_dir,product_dir)
 
 # eventype selection
 print "select eventype"
@@ -103,21 +103,21 @@ f.close()
 # select evttype=1 events
 fselect_text = 'fselect '+filename+' '+le_dir+'le_evt.fits @'+le_dir+'evttype.tim clobber=yes'
 print fselect_text
-#os.system(fselect_text)
+os.system(fselect_text)
 filename = le_dir + 'le_evt.fits'
 
 # select good time intervals utilizing HXMT software
 ## pi calculation
 lepical_text = 'lepical evtfile='+filename+' tempfile='+tempfilename+' outfile='+le_dir+'le_pi.fits clobber=yes history=yes'
 print lepical_text
-#os.system(lepical_text)
+os.system(lepical_text)
 
 ## gti selection
 legtigen_text = 'legtigen ehkfile='+ehkfilename+' outfile='+le_dir+'le_gti.fits'+\
 ' defaultexpr=no ELV=15 dye_elv=40 COR=8 sun_angle=10 '+\
 'moon_angle=10 SAA=yes T_SAA=100 TN_SAA=100 ang_dist=359'
 print legtigen_text
-#os.system(legtigen_text) 
+os.system(legtigen_text) 
 
 ## detector selection
 bigfov_flag = 'yes'
@@ -133,12 +133,12 @@ print bigfov_flag
 ledetectorsel_text = 'ledetectorsel infile='+filename+' outfile='+le_dir+'ledetconfig'+' detectorsel="'+str(det)[1:-1]+'" isbigfov='+bigfov_flag+' ismidfov='+midfov_flag+\
 ' issmlfov='+smfov_flag+' isblindfov='+blindfov_flag
 print ledetectorsel_text
-#os.system(ledetectorsel_text)
+os.system(ledetectorsel_text)
 
 ## LE events reconstruction
 lerecon_text = 'lerecon infile='+le_dir+'le_pi.fits'+' outfile='+le_dir+'le_grade.fits clobber=yes history=yes'
 print lerecon_text
-#os.system(lerecon_text)
+os.system(lerecon_text)
 
 ## select good Events
 grade_flag=1
@@ -146,7 +146,7 @@ if args.gradeflag:grade_flag=args.gradeflag
 lescreen_text = 'lescreen infile='+le_dir+'le_grade.fits'+' userconfigfile='+le_dir+'ledetconfig'+\
 ' badfile="" gtifile='+le_dir+'le_gti.fits outfile='+le_dir+'le_screen.fits tstart=0 tstop=0 gradeselection="Grade<='+str(grade_flag)+'" otherselection="PHA>0" clobber=yes'
 print lescreen_text
-#os.system(lescreen_text)
+os.system(lescreen_text)
 
 # carry out barycentering correction
 if args.hxbary:
