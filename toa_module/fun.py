@@ -4,6 +4,7 @@ import numpy as np
 import pyfits as pf
 import sys
 import matplotlib.pyplot as plt
+from function import genlc
 
 def read_par(parname):
     pardata = open(parname,'r')
@@ -42,7 +43,10 @@ def read_data(datalistname):
     for file in datalist:
         file = file[0:-1]
         print file
-        hdulist = pf.open(file)
+        try:
+            hdulist = pf.open(file)
+        except:
+            print "no such file"
         try:
             tdb = hdulist[1].data.field('tdb')
         except:
@@ -53,7 +57,7 @@ def read_data(datalistname):
     data.sort()
     return data
 
-def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=True,bin_profile=1000,threshold=1e6):
+def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=True,bin_profile=1000,threshold=0.16,std_pro_file='he_pro_std_1000.dat',gen_std_pro=False,out_std_pro_file=''):
     MJDREFF = 0.0007660185
     MJDREFI = 55927
     #read parfile and parameters
@@ -82,13 +86,16 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
         F4 = 0
 
     # standard profile
-    std_pro = np.loadtxt('he_pro_std_1000.dat')
+    std_pro = np.loadtxt(std_pro_file)
     std_pro = [(x - min(std_pro))/(max(std_pro)-min(std_pro)) for x in std_pro] # Normalization
 
     # seperate data
     edges = np.arange(min(time),max(time),duration)
+    if duration >= (max(time)-min(time)):
+        edges = np.array([min(time),max(time)])
     p_x = []
     profile = []
+    profile_std = []
     toa = []
     for i in xrange(len(edges[0:-1])):
         edge0 = edges[i]
@@ -97,7 +104,6 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
         if len(data)==0:
             print "EMPTY"
             continue
-        if len(data)<=threshold:continue
         t0 = min(data)
         T0 = t0/86400 + MJDREFF + MJDREFI
         dt = t0 - pepoch 
@@ -109,40 +115,59 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
         print f0,f1,f2
 
         phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)
-        p_num = np.histogram(phi,bin_profile)[0]
+        bin_x = np.arange(0,1,1.0/bin_profile)
+        p_num_unnorm = np.histogram(phi,bin_x)[0]
+        #p_num_unnorm = np.histogram(phi,bin_profile)[0]
+        p_num = p_num_unnorm
         p_num = [(x - min(p_num))/(max(p_num)-min(p_num)) for x in p_num] # Normalization
         p_num_x = np.arange(0.,bin_profile,1)/bin_profile
-        print len(p_num)
+        p_num_x = np.arange(0,1,1.0/bin_profile)
+        print np.std(p_num,ddof=1)
+        if np.std(p_num,ddof=1)<threshold:continue
 
-        #toa calculation
-        ## ccf shift
-        y, delay = ccf(std_pro,p_num)
-        y, delay = ccf(p_num,std_pro)
-        p_num_std = np.roll(std_pro,delay)
-        p_num_std_2 = np.append(p_num_std,p_num_std)
-        #
+        if not gen_std_pro:
+            #toa calculation
+            ## ccf shift
+            y, delay = ccf(p_num,std_pro)
+            p_num_std = np.roll(std_pro,delay)
+            p_num_std_2 = np.append(p_num_std,p_num_std)
+            #
 
-        #p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
-        #p_num_x_2 = p_num_x.tolist();p_num_2 = p_num
-        #p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
-        #std_pro_2 = np.append(std_pro,std_pro)
-        p_num_x_2_tmp = p_num_x + 1
-        p_num_x_2 = np.append(p_num_x,p_num_x_2_tmp)
-        p_num_2 = np.append(p_num,p_num);
-        std_pro_2 = np.append(std_pro,std_pro)
+            p_num_x_2_tmp = p_num_x + 1
+            p_num_x_2 = np.append(p_num_x,p_num_x_2_tmp)
+            p_num_2 = np.append(p_num,p_num);
+            std_pro_2 = np.append(std_pro,std_pro)
 
-        if fig_flag:
-            plt.figure()
-            plt.plot(p_num_x_2,p_num_2,'b')
-            plt.plot(p_num_x_2,p_num_std_2,'r')
-        
-        #phi_peak = p_num_x[p_num.index(max(p_num))]
-        phi_peak = p_num_x[np.where(p_num_std==max(p_num_std))][0]
-        toa_tmp = T0 + (1/f0) * phi_peak
+            #phi_peak = p_num_x[p_num.index(max(p_num))]
+            phi_peak = p_num_x[np.where(p_num_std==max(p_num_std))][0]
+            toa_tmp = T0 + (1/f0) * phi_peak
+            toa_tmp = T0 + (1/f0) * phi_peak/86400
 
-        p_x.append(p_num_x_2)
-        profile.append(p_num_2)
-        toa.append(toa_tmp)
+            p_x.append(p_num_x_2)
+            profile.append(p_num_2)
+            profile_std.append(p_num_std_2)
+            toa.append(toa_tmp)
+
+    if gen_std_pro:
+        with open(out_std_pro_file,'w')as f:
+            for pi in xrange(len(p_num_unnorm)):
+                wrt_str = '%f \n'%(p_num_unnorm[pi])
+                f.write(wrt_str)
+
+    if fig_flag:
+        fig_size = np.ceil(np.sqrt(len(toa)))
+        plt.figure('profiles')
+        for fig_num in xrange(len(toa)):
+            plt.subplot(fig_size,fig_size,fig_num+1)
+            plt.plot(p_x[fig_num],profile_std[fig_num],'r')
+            plt.plot(p_x[fig_num],profile[fig_num],'b')
+        ## plot light curve
+        plt.figure('light curve')
+        x,y = genlc(time,binsize=1)
+        plt.plot(x,y)
+        for i in xrange(len(edges[0:-1])):
+             plt.axvline(x=edges[i],linewidth=0.5,color='r')
+             plt.axvline(x=edges[i+1],linewidth=0.5,color='b')
 
     return p_x,profile,toa
 
@@ -177,6 +202,8 @@ def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag
         F4 = 0
 
     edges = np.arange(min(time),max(time),duration)
+    if duration >= (max(time)-min(time)):
+        edges = np.array([min(time),max(time)])
     tf = np.zeros(len(edges[0:-1]),dtype='longdouble')
     fre = np.zeros(len(edges[0:-1]),dtype='longdouble')
     fre_err = np.zeros(len(edges[0:-1]),dtype='longdouble')
@@ -192,10 +219,9 @@ def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag
         T0 = t0/86400.0 + MJDREFF + MJDREFI
         dt = t0 - pepoch 
         print 'cal f0',type(F0)
-        f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
-        
-        f1 = F1 + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**4)
-        f2 = F2 + F3*dt + (1/2)*F4*(dt**2)
+        f0 = F0 + F1*dt + (1.0/2)*F2*(dt**2) + (1.0/6)*F3*(dt**3) + (1.0/24)*F4*(dt**4)
+        f1 = F1 + F2*dt + (1.0/2)*F3*(dt**2) + (1.0/6)*F4*(dt**4)
+        f2 = F2 + F3*dt + (11.0/2)*F4*(dt**2)
         f3 = F3 + F4*dt
         f4 = F4
         print 'f0,f1,f2=',
@@ -205,29 +231,34 @@ def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag
         f = np.arange(f0-frange,f0+frange,fstep)
         print type(f[0])
         chi_square = np.zeros(len(f))
+        chi_square = np.array([])
         N = len(data)
         b = N/bin_cs
-        for j in range(0,len(f)):
-            #phi_tmp = np.mod((data-t0)*f[j] + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)
-            phi_tmp = np.mod((data-t0)*f[j] + (1/2)*((data-t0)**2)*f1 + ((data-t0)**3)*f2 ,1.0)
-            p_num = np.histogram(phi_tmp,bin_cs)[0]
-            #bb = b * np.ones(bin_cs)
-            #chi_square[j] = np.sum((p_num-bb)**2)/b
-            chi_square[j] = np.std(p_num)**2/np.mean(p_num)
+        for f1 in np.arange(-3.72e-10,-3.69e-10,0.5e-12):
+            for j in range(0,len(f)):
+                phi_tmp = np.mod((data-t0)*f[j] + (1.0/2)*((data-t0)**2)*f1 + (1.0/6.0)*((data-t0)**3)*f2 + (1.0/24)*(data-t0)**f3,1.0)
+                p_num = np.histogram(phi_tmp,bin_cs)[0]
+                #chi_square[j] = np.std(p_num)**2/np.mean(p_num)
+                chi_square = np.append(chi_square,(np.std(p_num)**2/np.mean(p_num)))
+                with open('./f0-f1search/f0-f1_search'+str(j)+'.dat','w')as ffile:
+                    for ichi in chi_square:
+                        ffile.write('%f \n'%ichi)
             
 
             percent = float(j)*100/len(f)
             sys.stdout.write(" fsearch complete: %.2f"%percent);
             sys.stdout.write("%\r");
             sys.stdout.flush()
-        print chi_square
-        fbest = f[np.where(chi_square==max(chi_square))][0]
-        fre[i] = fbest
-        tf[i] = T0
-        fre_err[i] = fstep/(max(chi_square)/bin_cs)
-        if fig_flag:
+            print "f: ",f
+            print "f1: ",np.arange(-3.72e-10,-3.69e-10,0.5e-12)
+            #fbest = f[np.where(chi_square==max(chi_square))][0]
+            #fre[i] = fbest
+            #tf[i] = T0
+            #fre_err[i] = fstep/(max(chi_square)/bin_cs)
+            #if fig_flag:
             plt.figure()
-            plt.plot(f,chi_square)
+            #plt.plot(f,chi_square)
+            plt.plot(chi_square)
     tf = tf[tf>0]
     fre =fre[fre>0]
     fre_err = fre_err[fre_err>0]
@@ -235,11 +266,11 @@ def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag
 #    return p_num_x_2,p_num_2,f,chi_square
     return tf,fre,fre_err
 
-def toa_write(filename,toa):
+def toa_write(filename,toa,instru):
     with open(filename,'w')as f:
         f.write('FORMAT 1\n')
         for i in xrange(len(toa)):
-            wrt_str = 'HE.toa 3000 %.20f 33 bat\n'%(toa[i])
+            wrt_str = instru+'.toa 3000 %.20f 33 bat\n'%(toa[i])
             f.write(wrt_str)
 
 def fre_write(filename,mjd, fre, fre_err):
@@ -262,3 +293,42 @@ def ccf(f1,f2):
     delay = np.where(y==max(y))[0] 
     return y,delay
 
+def lucy_next_res(prob, now_res, raw_res):
+
+    count = len(now_res)
+    temp = np.inner(prob, now_res)
+    temp2 = np.inner(raw_res / temp, np.transpose(prob))
+    next_res = now_res * temp2
+    return next_res
+
+def lucy_iteration(prob, raw_res, n):
+    for i in range(n):
+        if i == 0:
+            res = lucy_next_res(prob, raw_res, raw_res)
+        else:
+            res = lucy_next_res(prob, res, raw_res)
+    return res
+
+def le_delay(tdb):
+    delay_time_tmp = []
+    while len(delay_time_tmp) < len(tdb):
+        print 1
+        x = np.random.uniform(0.2e-3,1.18e-3,2*len(tdb))
+        y = np.random.uniform(0,0.02,2*len(tdb))
+        print 2
+        delay_time_tmp = x[y-20.408*x+4.081e-3 <= 0]
+        print 3
+    delay_time = random.sample(delay_time_tmp,len(tdb))
+    delay_time = np.asarray(delay_time)
+    print delay_time
+    return delay_time
+
+def nor_pro_err(y):
+    '''calculation error of normalized profile'''
+    y = np.asarray(y)
+    sig_y = np.sqrt(y)
+    sig_max = np.sqrt(max(y))
+    sig_min = np.sqrt(min(y))
+    sigma_square = (sig_y**2 + sig_min**2)/((max(y)-min(y))**2) + (((y - min(y))**2)*(sig_max**2 + sig_min**2))/((max(y) - min(y))**4)
+    sigma = np.sqrt(sigma_square)
+    return sigma
