@@ -5,6 +5,7 @@ import pyfits as pf
 import sys
 import matplotlib.pyplot as plt
 from function import genlc
+import os
 
 def read_par(parname):
     pardata = open(parname,'r')
@@ -21,7 +22,6 @@ def read_par(parname):
         if stdpar[i][:2]=='F0': 
             F0_lst = stdpar[i].split(' ');F0 = [x for x in F0_lst if x is not ''][1]
             parameters[1] = np.longdouble(F0) 
-            print F0,parameters[1],np.double(F0),type(parameters[1])
         if stdpar[i][:2]=='F1':
             F1_lst = stdpar[i].split(' ');F1 = [x for x in F1_lst if x is not ''][1]
             parameters[2] = np.longdouble(F1)
@@ -32,9 +32,9 @@ def read_par(parname):
             F3_lst = stdpar[i].split(' ');F3 = [x for x in F3_lst if x is not ''][1]
             parameters[4] = np.longdouble(F3)
         if stdpar[i][:2]=='F4':
-            F3_lst = stdpar[i].split(' ');F4 = [x for x in F3_lst if x is not ''][1]
+            F4_lst = stdpar[i].split(' ');F4 = [x for x in F4_lst if x is not ''][1]
             parameters[5] = np.longdouble(F4)
-    print 'parameters=',parameters,type(parameters[0]),type(parameters[1])
+    print 'parameters=',parameters
     return parameters
 
 def read_data(datalistname):
@@ -53,7 +53,6 @@ def read_data(datalistname):
             print "NO TDB column"
             continue
         data = np.append(data, tdb)
-        print len(data)
     data.sort()
     return data
 
@@ -108,21 +107,20 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
         T0 = t0/86400 + MJDREFF + MJDREFI
         dt = t0 - pepoch 
         f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
-        f1 = F1 + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**4)
+        f1 = F1 + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**3)
         f2 = F2 + F3*dt + (1/2)*F4*(dt**2)
         f3 = F3 + F4*dt
         f4 = F4
-        print f0,f1,f2
+        print 'f0,f1,f2,f3,f4',f0,f1,f2,f3,f4
 
         phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)
         bin_x = np.arange(0,1,1.0/bin_profile)
+        bin_x = np.append(bin_x,1.0)
         p_num_unnorm = np.histogram(phi,bin_x)[0]
         #p_num_unnorm = np.histogram(phi,bin_profile)[0]
         p_num = p_num_unnorm
         p_num = [(x - min(p_num))/(max(p_num)-min(p_num)) for x in p_num] # Normalization
-        p_num_x = np.arange(0.,bin_profile,1)/bin_profile
         p_num_x = np.arange(0,1,1.0/bin_profile)
-        print np.std(p_num,ddof=1)
         if np.std(p_num,ddof=1)<threshold:continue
 
         if not gen_std_pro:
@@ -130,22 +128,12 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
             ## ccf shift
             y, delay = ccf(p_num,std_pro)
             p_num_std = np.roll(std_pro,delay)
-            p_num_std_2 = np.append(p_num_std,p_num_std)
-            #
-
-            p_num_x_2_tmp = p_num_x + 1
-            p_num_x_2 = np.append(p_num_x,p_num_x_2_tmp)
-            p_num_2 = np.append(p_num,p_num);
-            std_pro_2 = np.append(std_pro,std_pro)
-
-            #phi_peak = p_num_x[p_num.index(max(p_num))]
             phi_peak = p_num_x[np.where(p_num_std==max(p_num_std))][0]
             toa_tmp = T0 + (1/f0) * phi_peak
             toa_tmp = T0 + (1/f0) * phi_peak/86400
-
-            p_x.append(p_num_x_2)
-            profile.append(p_num_2)
-            profile_std.append(p_num_std_2)
+            p_x = np.append(p_x,p_num_x)
+            profile = np.append(profile,p_num_unnorm)
+            profile_std.append(p_num_std)
             toa.append(toa_tmp)
 
     if gen_std_pro:
@@ -155,12 +143,8 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
                 f.write(wrt_str)
 
     if fig_flag:
-        fig_size = np.ceil(np.sqrt(len(toa)))
         plt.figure('profiles')
-        for fig_num in xrange(len(toa)):
-            plt.subplot(fig_size,fig_size,fig_num+1)
-            plt.plot(p_x[fig_num],profile_std[fig_num],'r')
-            plt.plot(p_x[fig_num],profile[fig_num],'b')
+        plt.plot(p_num_x,p_num,'r')
         ## plot light curve
         plt.figure('light curve')
         x,y = genlc(time,binsize=1)
@@ -332,3 +316,72 @@ def nor_pro_err(y):
     sigma_square = (sig_y**2 + sig_min**2)/((max(y)-min(y))**2) + (((y - min(y))**2)*(sig_max**2 + sig_min**2))/((max(y) - min(y))**4)
     sigma = np.sqrt(sigma_square)
     return sigma
+
+
+def phi_cal(time,parfile,infile,outfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,bin_profile=1000,threshold=0.16):
+    MJDREFF = 0.0007660185
+    MJDREFI = 55927
+    #read parfile and parameters
+    parameters = read_par(parfile)
+    PEPOCH = parameters[0]
+    pepoch = (PEPOCH - MJDREFF - MJDREFI)*86400
+    if f0_flag:
+        F0 = parameters[1]
+    else:
+        F0 = 0
+    if f1_flag:
+        F1 = parameters[2]
+    else:
+        F1 = 0
+    if f2_flag:
+        F2 = parameters[3]
+    else:
+        F2 = 0
+    if f3_flag:
+        F3 = parameters[4]
+    else:
+        F3 = 0
+    if f4_flag:
+        F4 = parameters[5]
+    else:
+        F4 = 0
+
+    # seperate data
+    edges = np.arange(min(time),max(time),duration)
+    if duration >= (max(time)-min(time)):
+        edges = np.array([min(time),max(time)])
+    p_x = []
+    profile = []
+    profile_std = []
+    toa = []
+    phi = []
+    for i in xrange(len(edges[0:-1])):
+        edge0 = edges[i]
+        edge1 = edges[i+1]
+        data = time[ (time>=edge0) & (time<=edge1) ]
+        if len(data)==0:
+            print "EMPTY"
+            continue
+        t0 = min(data)
+        T0 = t0/86400 + MJDREFF + MJDREFI
+        dt = t0 - pepoch 
+        f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
+        f1 = F1 + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**3)
+        f2 = F2 + F3*dt + (1/2)*F4*(dt**2)
+        f3 = F3 + F4*dt
+        f4 = F4
+        print f0,f1,f2
+
+        # write column to fits file
+        #calc_text = 'ftcalc '+infile+' '+outfile+' Phase "((TDB-'+str(t0)+ ')*'+str(f0)+'(1/2)*((TDB-'+str(t0)+')**2)*'+str(f1+'+(1/6)*((TDB-'+str(t0)+')**3)*'+str(f2)+'+(1/24)*((TDB-'+str(t0)+'**4)*'+str(f3)+'%1 clobber=yes'
+        calc_text = 'ftcalc '+infile+' '+outfile+' Phase '+'"+((TDB-'+str(t0)+')*'+str(f0)+ '+ (1/2)*((TDB-'+str(t0)+')**2)*'+str(f1)+ '+ (1/6)*((TDB-'+str(t0)+')**3)*'+str(f2)+ '+ (1/24)*((TDB-'+str(t0)+')**4)*'+str(f3)+')%1"'+' clobber=yes'
+        print calc_text
+        os.system(calc_text)
+        phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)
+        bin_x = np.arange(0,1,1.0/bin_profile)
+        bin_x = np.append(bin_x,1.0)
+        p_num_unnorm = np.histogram(phi,bin_x)[0]
+        p_num = p_num_unnorm
+        p_num = [(x - min(p_num))/(max(p_num)-min(p_num)) for x in p_num] # Normalization
+        p_num_x = np.arange(0,1,1.0/bin_profile)
+    return phi,p_num_x,p_num
