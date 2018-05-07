@@ -55,8 +55,8 @@ def genlc(data,binsize=1,fig=False,rate=True,pannel=True):
 # generate spec
 def genspec(channel):
     ''' return spec_x, spec'''
-    spec = np.histogram(channel,255-min(channel))[0]
-    spec_x = np.histogram(channel,255-min(channel))[1][0:-1]
+    spec = np.histogram(channel,int(max(channel)-min(channel)))[0]
+    spec_x = np.histogram(channel,int(max(channel)-min(channel)))[1][0:-1]
     return spec_x,spec
 
 # Read data
@@ -304,6 +304,7 @@ def smooth(y, box_pts):
 def ccf(f1,f2):
     '''f1 is the original signal
        f2 is probe signal(shift and test)'''
+    f2range = xrange(len(f2))
     mean_f1 = np.mean(f1)
     mean_f2 = np.mean(f2)
     delta_f1 = f1 - mean_f1
@@ -311,4 +312,75 @@ def ccf(f1,f2):
     sigma_f1 = np.sqrt(np.sum([x**2 for x in f1]))
     sigma_f2 = np.sqrt(np.sum([x**2 for x in f2]))
     y = [ np.sum(delta_f1 * np.roll(delta_f2,x))/(sigma_f1 * sigma_f2) for x in xrange(len(f2)) ]
-    return y
+    delay = np.where(y==max(y))[0]
+    return y,delay
+
+def exp_cal(time):
+    #calculate exposure time
+    tmp_time = np.roll(time,-1);tmp_time[-1]=time[-1]
+    time_step = tmp_time - time
+    unexp_flag = np.greater(time_step,1)
+    unexp_dur = np.sum(time_step[unexp_flag])
+    exposure = max(time)-min(time)-unexp_dur
+    return exposure
+
+def merge_data(time, rate, error, edges):                                                                                                                            
+    time_new = np.array([]);
+    rate_new = np.array([])
+    error_new = np.array([])
+
+    for i in xrange(len(edges)-1):
+        time_i = time[(time>=edges[i])&(time<=edges[i+1])]
+        rate_i = rate[(time>=edges[i])&(time<=edges[i+1])]
+        error_i = error[(time>=edges[i])&(time<=edges[i+1])]
+        N = len(time_i)
+        rate_new = np.append(rate_new,np.mean(rate_i))
+        time_new = np.append(time_new,np.mean(time_i))
+        error_new = np.append(error_new,np.sqrt(np.sum(error_i**2))/N)
+    return time_new, rate_new, error_new
+
+def find_edges(time):
+    # upper limits
+    tmp_time = np.roll(time,-1);tmp_time[-1]=time[-1]
+    time_step = tmp_time - time
+    edge_flag = np.greater(time_step,1)
+    edges = time[edge_flag]
+    # lowwer limits
+    tmp_time = np.roll(time,1);tmp_time[0]=time[0]
+    time_step = tmp_time - time
+    edge_flag = np.less(time_step,-1)
+    edges = np.append(edges, time[edge_flag])
+    # min & max limits
+    edges = np.append(edges, min(time))
+    edges = np.append(edges, max(time))
+    edges = np.sort(edges)
+    left_edges = edges[::2]
+    right_edges = edges[1::2]
+    return left_edges, right_edges
+
+def write_resp(specfile, rmf, arf, quiet_flag=True):
+    if quiet_flag:
+        fparkey_text = 'fparkey ' + rmf + ' ' + specfile + ' RESPFILE > tmp.log'
+        print fparkey_text
+        os.system(fparkey_text)
+        fparkey_text = 'fparkey ' + arf + ' ' + specfile + ' ANCRFILE > tmp.log'
+        os.system(fparkey_text)
+        print fparkey_text
+    else:
+        fparkey_text = 'fparkey ' + rmf + ' ' + specfile + ' RESPFILE'
+        print fparkey_text
+        os.system(fparkey_text)
+        fparkey_text = 'fparkey ' + arf + ' ' + specfile + ' ANCRFILE'
+        os.system(fparkey_text)
+        print fparkey_text
+def write_back(specfile, backfile, quiet_flag=True):
+    if quiet_flag:
+        fparkey_text = 'fparkey ' + backfile + ' ' + specfile + ' BACKFILE > tmp.log'
+        print fparkey_text
+        os.system(fparkey_text)
+    else:
+        fparkey_text = 'fparkey ' + backfile + ' ' + specfile + ' BACKFILE'
+        print fparkey_text
+        os.system(fparkey_text)
+
+
