@@ -263,20 +263,6 @@ def fre_write(filename,mjd, fre, fre_err):
             wrt_str = '%.16f %.16f %.16f \n'%(mjd[i],fre[i],fre_err[i])
             f.write(wrt_str)
 
-def ccf(f1,f2):
-    '''f1 is the original signal
-       f2 is probe signal(shift and test)'''
-    f2range = xrange(len(f2))
-    mean_f1 = np.mean(f1)
-    mean_f2 = np.mean(f2)
-    delta_f1 = f1 - mean_f1
-    delta_f2 = f2 - mean_f2
-    sigma_f1 = np.sqrt(np.sum([x**2 for x in f1]))
-    sigma_f2 = np.sqrt(np.sum([x**2 for x in f2]))
-    y = [ np.sum(delta_f1 * np.roll(delta_f2,x))/(sigma_f1 * sigma_f2) for x in f2range ]
-    delay = np.where(y==max(y))[0] 
-    return y,delay
-
 def lucy_next_res(prob, now_res, raw_res):
 
     count = len(now_res)
@@ -318,7 +304,7 @@ def nor_pro_err(y):
     return sigma
 
 
-def phi_cal(time,parfile,infile,outfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,bin_profile=1000,threshold=0.16):
+def phi_cal(time,parfile,infile,outfile,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False):
     MJDREFF = 0.0007660185
     MJDREFI = 55927
     #read parfile and parameters
@@ -346,42 +332,28 @@ def phi_cal(time,parfile,infile,outfile,duration,f0_flag=True,f1_flag=True,f2_fl
     else:
         F4 = 0
 
-    # seperate data
-    edges = np.arange(min(time),max(time),duration)
-    if duration >= (max(time)-min(time)):
-        edges = np.array([min(time),max(time)])
-    p_x = []
-    profile = []
-    profile_std = []
-    toa = []
-    phi = []
-    for i in xrange(len(edges[0:-1])):
-        edge0 = edges[i]
-        edge1 = edges[i+1]
-        data = time[ (time>=edge0) & (time<=edge1) ]
-        if len(data)==0:
-            print "EMPTY"
-            continue
-        t0 = min(data)
-        T0 = t0/86400 + MJDREFF + MJDREFI
-        dt = t0 - pepoch 
-        f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
-        f1 = F1 + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**3)
-        f2 = F2 + F3*dt + (1/2)*F4*(dt**2)
-        f3 = F3 + F4*dt
-        f4 = F4
-        print f0,f1,f2
+    data = time
+    t0 = min(data)
+    t0 = pepoch # !!! set one reference point
+    T0 = t0/86400 + MJDREFF + MJDREFI
+    dt = t0 - pepoch 
+    f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
+    f1 = F1 + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**3)
+    f2 = F2 + F3*dt + (1/2)*F4*(dt**2)
+    f3 = F3 + F4*dt
+    f4 = F4
+    print "periodic parameters: ",f0,f1,f2,f3,f4
 
-        # write column to fits file
-        #calc_text = 'ftcalc '+infile+' '+outfile+' Phase "((TDB-'+str(t0)+ ')*'+str(f0)+'(1/2)*((TDB-'+str(t0)+')**2)*'+str(f1+'+(1/6)*((TDB-'+str(t0)+')**3)*'+str(f2)+'+(1/24)*((TDB-'+str(t0)+'**4)*'+str(f3)+'%1 clobber=yes'
-        calc_text = 'ftcalc '+infile+' '+outfile+' Phase '+'"+((TDB-'+str(t0)+')*'+str(f0)+ '+ (1/2)*((TDB-'+str(t0)+')**2)*'+str(f1)+ '+ (1/6)*((TDB-'+str(t0)+')**3)*'+str(f2)+ '+ (1/24)*((TDB-'+str(t0)+')**4)*'+str(f3)+')%1"'+' clobber=yes'
-        print calc_text
-        os.system(calc_text)
-        phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)
-        bin_x = np.arange(0,1,1.0/bin_profile)
-        bin_x = np.append(bin_x,1.0)
-        p_num_unnorm = np.histogram(phi,bin_x)[0]
-        p_num = p_num_unnorm
-        p_num = [(x - min(p_num))/(max(p_num)-min(p_num)) for x in p_num] # Normalization
-        p_num_x = np.arange(0,1,1.0/bin_profile)
-    return phi,p_num_x,p_num
+    # write column to fits file
+    calc_text = 'ftcalc '+infile+' '+outfile+' Phase '+\
+            '"((TDB-'+str(t0)+')*'+'('+str(f0)+')'+\
+            '+ (1/2)*((TDB-'+str(t0)+')**2)*'+'('+str(f1)+')'+\
+            '+ (1/6)*((TDB-'+str(t0)+')**3)*'+'('+str(f2)+')'+\
+            '+ (1/24)*((TDB-'+str(t0)+')**4)*'+'('+str(f3)+')'+\
+            '+ (1/120)*((TDB-'+str(t0)+')**5)*'+'('+str(f4)+')'+\
+            ')%1"'+' clobber=yes'
+    print calc_text
+    os.system(calc_text)
+    phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)
+    print "np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)"
+    return phi
