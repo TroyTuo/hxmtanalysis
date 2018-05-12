@@ -40,7 +40,7 @@ if not os.path.isdir(me_dir):os.system('mkdir -p '+me_dir)
 filename = sorted(glob.glob(data_dir + '/ME/*ME-Evt_FFFFFF_V[1-9]*'))[-1]
 orbitname = sorted(glob.glob(data_dir + '/ACS/*_Orbit_*V[1-9]*'))[-1]
 try:
-    preciseorbitname = sorted(glob.glob(data_dir + '/ACS/*Precise*V[1-9]*'))[-1]
+    preciseorbitname = sorted(glob.glob(data_dir + '/ACS/*Orbit*V[1-9]*'))[-1]
 except:
     print "NO Precise Orbit file"+data_dir
 attname = sorted(glob.glob(data_dir + '/ACS/*_Att_*V[1-9]*'))[-1]
@@ -96,33 +96,33 @@ megrade_text = 'megrade evtfile='+me_dir+'me_pi.fits'+' outfile='+me_dir+'me_gra
 print megrade_text
 os.system(megrade_text)
 
-### select detectors
-#det = ''
-#if args.bigfovdet:
-#    print 'function not available'
-#if args.smfovdet:
-#    det = det + '0-5,7,12-23,25,30-41,43,48-53'
-#if args.blinddet:
-#    det = det + '10,28,46'
-#if args.detlist:
-#    det = det + args.detlist;
-#print 'detector_list:',det
-#
-#mescreen_text = 'mescreen evtfile='+me_dir+'me_grade.fits gtifile='+me_dir+'me_gti.fits outfile='+me_dir+'me_screen.fits baddetfile=""'+\
-#' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024'
-#print mescreen_text
-#os.system(mescreen_text)
-#
-## carry out barycentering correction
-#if args.hxbary:
-#    try:
-#        preciseorbitname = sorted(glob.glob(data_dir + '/ACS/*Precise*V[1-9]*'))[-1]
-#    except:
-#        print 'WARNING: NO Precise Orbit file('+data_dir+')'
-#    # carry out hxbary
-#    ra = args.ra
-#    dec = args.dec
-#    hxbary_text = 'hxbary' + ' ' + me_dir + 'me_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-#    print hxbary_text
-#    os.system(hxbary_text)
+## select detectors
+det = ''
+if args.bigfovdet:
+    print 'function not available'
+if args.smfovdet:
+    det = det + '0-5,7,12-23,25,30-41,43,48-53'
+if args.blinddet:
+    det = det + '10,28,46'
+if args.detlist:
+    det = det + args.detlist;
+print 'detector_list:',det
+
+mescreen_text = 'mescreen evtfile='+me_dir+'me_grade.fits gtifile='+me_dir+'me_gti.fits outfile='+me_dir+'me_screen.fits baddetfile=""'+\
+' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024'
+print mescreen_text
+os.system(mescreen_text)
+
+# carry out barycentering correction
+if args.hxbary:
+    try:
+        preciseorbitname = sorted(glob.glob(data_dir + '/ACS/*Orbit*V[1-9]*'))[-1]
+    except:
+        print 'WARNING: NO Precise Orbit file('+data_dir+')'
+    # carry out hxbary
+    ra = args.ra
+    dec = args.dec
+    hxbary_text = 'hxbary' + ' ' + me_dir + 'me_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+    print hxbary_text
+    os.system(hxbary_text)
 
