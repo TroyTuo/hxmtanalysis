@@ -333,14 +333,14 @@ def phi_cal(time,parfile,infile,outfile,f0_flag=True,f1_flag=True,f2_flag=True,f
         F4 = 0
 
     data = time
-    t0 = min(data)
+#    t0 = min(data)
     t0 = pepoch # !!! set one reference point
     T0 = t0/86400 + MJDREFF + MJDREFI
     dt = t0 - pepoch 
-    f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
-    f1 = F1 + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**3)
-    f2 = F2 + F3*dt + (1/2)*F4*(dt**2)
-    f3 = F3 + F4*dt
+    f0 = F0# + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
+    f1 = F1# + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**3)
+    f2 = F2# + F3*dt + (1/2)*F4*(dt**2)
+    f3 = F3# + F4*dt
     f4 = F4
     print "periodic parameters: ",f0,f1,f2,f3,f4
 
