@@ -71,7 +71,7 @@ Example. From a event file screened by good time file, create a spectrum
         
 ## The usage of Python Toolkit
 
-to be under construction 
+under construction 
    
 
 
