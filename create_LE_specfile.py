@@ -39,9 +39,9 @@ def create_LE_specfile(exposure,counts,error,outfile):
     hdulist[1].header['ANCRFILE'] = 'NONE'
     hdulist[1].header['FILETER']  = 'NONE'
     hdulist[1].header['PHAVERSN'] = '1992a'
-    hdulist[1].header['STATERR']  = FALSE
+    hdulist[1].header['STATERR']  = TRUE
     hdulist[1].header['SYSERR']   = FALSE
-    hdulist[1].header['POISSERR'] = TRUE
+    hdulist[1].header['POISSERR'] = FALSE
     hdulist[1].header['GROUPING'] = 1
     hdulist[1].header['QUALITY']  = 1
     hdulist[1].header['AREASCAL'] = 1
