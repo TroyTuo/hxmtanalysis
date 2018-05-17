@@ -215,7 +215,47 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
 
     return p_num_x_2,p_num_2,f,chi_square
 
-def pfold(data,f0,f1,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0):
+def psearch(filename,p0,prange,pstep,pannel=True,prefix='',bin_cs=1000):
+    #import data
+    print filename
+    hdulist = pf.open(filename)
+    tb = hdulist[1].data
+    tdb = tb.field('TDB')
+    hdulist.close()
+    data = tdb
+    t0 =min(data)
+    
+    
+    p = np.arange(p0-prange,p0+prange,pstep)
+    chi_square = np.array([])
+    N = len(data)
+    b = N/bin_cs
+    for j in range(0,len(p)):
+        phi_tmp = np.mod((data-t0)/p[j],1.0)
+        p_num = np.histogram(phi_tmp,bin_cs)[0]
+        chi_square = np.append(chi_square,(np.std(p_num)**2/np.mean(p_num)))
+    
+        percent = float(j)*100/len(p)
+        sys.stdout.write(" fsearch complete: %.2f"%percent);
+        sys.stdout.write("%\r");
+        sys.stdout.flush()
+    pbest = p[np.where(chi_square==max(chi_square))[0]]
+#    print 'fbest = ',fbest
+    plt.figure()
+    plt.plot(p,chi_square)
+    plt.xlabel('Period (second)')
+    plt.ylabel('Chi-square')
+    plt.title(prefix)
+    if pannel:
+        # annotation text
+        text = 'best Period = '+str(pbest[0])+'(s)\n Resolution = '+str(pstep)+'(s)'
+        plt.annotate(text, xy=(1, 1), xytext=(-15, -15), fontsize=10,
+        xycoords='axes fraction', textcoords='offset points',
+        bbox=dict(facecolor='white', alpha=0.8),
+        horizontalalignment='right', verticalalignment='top')
+    return pbest
+
+def pfold(data,f0,f1=0,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0):
 
     raw_data = data
     if t0 == 0:
@@ -228,6 +268,7 @@ def pfold(data,f0,f1,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0):
     p_num = np.histogram(phi,bin_profile)[0]
     p_num = p_num/np.sum(p_num,dtype=np.float) # Normalization
     p_num = p_num/np.mean(p_num) # Normalization
+    p_num = (p_num-min(p_num))/(max(p_num)-min(p_num)) # Normalization
     p_num_x = np.arange(0.,bin_profile,1)/bin_profile
 
     p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
