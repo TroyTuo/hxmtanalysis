@@ -5,6 +5,8 @@ import pyfits as pf
 import sys
 import matplotlib.pyplot as plt
 from function import genlc
+from function import ccf
+
 import os
 
 def read_par(parname):
@@ -56,7 +58,9 @@ def read_data(datalistname):
     data.sort()
     return data
 
-def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=True,bin_profile=1000,threshold=0.16,std_pro_file='he_pro_std_1000.dat',gen_std_pro=False,out_std_pro_file=''):
+def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=True,bin_profile=1000,threshold=0,std_pro_file='he_pro_std_1000.dat',gen_std_pro=False,out_std_pro_file=''):
+    ''' NOTICE: this pfold function is different with pfold in function base in hxmtanalysis,
+    which fold the profile without parameter file'''
     MJDREFF = 0.0007660185
     MJDREFI = 55927
     #read parfile and parameters
@@ -104,12 +108,13 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
             print "EMPTY"
             continue
         t0 = min(data)
+        t0 = pepoch
         T0 = t0/86400 + MJDREFF + MJDREFI
         dt = t0 - pepoch 
-        f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
-        f1 = F1 + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**3)
-        f2 = F2 + F3*dt + (1/2)*F4*(dt**2)
-        f3 = F3 + F4*dt
+        f0 = F0# + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
+        f1 = F1# + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**3)
+        f2 = F2# + F3*dt + (1/2)*F4*(dt**2)
+        f3 = F3# + F4*dt
         f4 = F4
         print 'f0,f1,f2,f3,f4',f0,f1,f2,f3,f4
 
@@ -156,6 +161,8 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
     return p_x,profile,toa
 
 def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=False,bin_cs=20,bin_profile=1000,threshold=3e6):
+    ''' NOTICE: this fsearch function is different with fsearch in function base in hxmtanalysis,
+    which calculate best frequency without parameter file'''
     MJDREFF = 0.0007660185
     MJDREFI = 55927
     #read parfile and parameters
