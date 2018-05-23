@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import division
 import numpy as np
 import pyfits as pf
 import matplotlib.pyplot as plt
@@ -215,15 +215,10 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
 
     return p_num_x_2,p_num_2,f,chi_square
 
-def psearch(filename,p0,prange,pstep,pannel=True,prefix='',bin_cs=1000):
+def psearch(data,p0,prange,pstep,pannel=True,prefix='',bin_cs=1000,t0=0):
     #import data
-    print filename
-    hdulist = pf.open(filename)
-    tb = hdulist[1].data
-    tdb = tb.field('TDB')
-    hdulist.close()
-    data = tdb
-    t0 =min(data)
+    if t0 == 0:
+        t0 =min(data)
     
     
     p = np.arange(p0-prange,p0+prange,pstep)
@@ -266,16 +261,18 @@ def pfold(data,f0,f1=0,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0):
     fbest = f0
     phi = np.mod(data*fbest + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
     p_num = np.histogram(phi,bin_profile)[0]
-    p_num = p_num/np.sum(p_num,dtype=np.float) # Normalization
-    p_num = p_num/np.mean(p_num) # Normalization
+    p_error = np.sqrt(p_num)
+    p_error = p_error/(max(p_num)-min(p_num)) # Error Normalization
+#    p_num = p_num/np.sum(p_num,dtype=np.float) # Normalization
+#    p_num = p_num/np.mean(p_num) # Normalization
     p_num = (p_num-min(p_num))/(max(p_num)-min(p_num)) # Normalization
     p_num_x = np.arange(0.,bin_profile,1)/bin_profile
 
-    p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
-    p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
-    p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
+    p_num_x = np.append(p_num_x,p_num_x+1)
+    p_num = np.append(p_num,p_num)
+    p_error = np.append(p_error,p_error)
 
-    return p_num_x_2,p_num_2
+    return p_num_x,p_num,p_error
 
 def tical(data,fig=False,binsize=0.00001): # calculate distribution of time interval
     ti = []
