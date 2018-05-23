@@ -40,7 +40,7 @@ def ehkgen(infile_dir,outfile_dir):
     leapfile="/hxmt/home/hxmtsoft2/hxmtehkgen/hxmtehkgen/refdata/leapsec.fits"
     rigidity="/hxmt/home/hxmtsoft2/hxmtehkgen/hxmtehkgen/refdata/rigidity_20060421.fits"
     saafile="/hxmt/home/hxmtsoft2/hxmtehkgen/SAA/SAA.fits"
-    text = "hxmtehkgen orbfile="+orbfile+" attfile="+attfile+" outfile="+outfile+" leapfile="+leapfile+" rigidity="+rigidity+" saafile="+saafile+" step_sec=1 mean_phi=0.1 mean_theta=0.1 mean_psi=0.1 clobber=yes"
+    text = "hxmtehkgen orbfile="+orbfile+" attfile="+attfile+" outfile="+outfile+" leapfile="+leapfile+" rigidity="+rigidity+" saafile="+saafile+" step_sec=1 clobber=yes"
     print text
     os.system(text)
 
