@@ -3,7 +3,7 @@ from __future__ import division
 from astropy.io import fits
 import numpy as np
 
-def create_LE_specfile(exposure,counts,error,outfile):
+def create_HE_specfile(exposure,counts,error,outfile):
     Channel = np.linspace(0,255,256)
     quality = np.zeros(len(Channel))
     COUNTS = counts
