@@ -1,7 +1,8 @@
 # A python Toolkit for HXMT data analysis
 
 
-## The usage of HXMT software
+## The usage of HXMT software(Version 1.0)
+**IMPORTANT NOTICE: As long as the Version 2.0 software were published, we will not update the user manual of elder version.**
 
 
 **NOTE: Only the software for High Energy detector is introduced below.**
@@ -9,7 +10,7 @@
 
 *Before utilizing this toolkit, an HXMT software package should be installed([download page](http://www.hxmt.org/index.php/dataan/2013-03-22-08-13-10)).*
 
-A full description of the usage of HXMT software can be found in fhelp document while it is well installed. The complete procedures including three steps: PI calculation, selection of good time intervals, producing data production(light curve, background and spectrum files).
+A full description of the usage of HXMT software can be found in fhelp document while it is installed on your computer. The complete analysis procedures including three steps: PI calculation, selection of good time intervals, producing data production(light curve, background and spectrum files).
 
 ### hepical
 
@@ -67,6 +68,8 @@ Example. From a event file screened by good time file, create a spectrum
     for detector 0, 1, 3, 5, with default start and stop time range. 
     
 `> hegenspec evtfile=he_screen.fits outfile=pha deadfile=deadtime.FITS starttime=0 stoptime=0 detid="0 1 3 5"`
+
+
         
         
 ## The usage of Python Toolkit
