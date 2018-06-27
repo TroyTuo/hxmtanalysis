@@ -311,7 +311,7 @@ def nor_pro_err(y):
     return sigma
 
 
-def phi_cal(time,parfile,infile,outfile,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False):
+def phi_cal(time,parfile,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False):
     MJDREFF = 0.0007660185
     MJDREFI = 55927
     #read parfile and parameters
@@ -351,16 +351,15 @@ def phi_cal(time,parfile,infile,outfile,f0_flag=True,f1_flag=True,f2_flag=True,f
     f4 = F4
     print "periodic parameters: ",f0,f1,f2,f3,f4
 
-    # write column to fits file
-    calc_text = 'ftcalc '+infile+' '+outfile+' Phase '+\
-            '"((TDB-'+str(t0)+')*'+'('+str(f0)+')'+\
-            '+ (1/2)*((TDB-'+str(t0)+')**2)*'+'('+str(f1)+')'+\
-            '+ (1/6)*((TDB-'+str(t0)+')**3)*'+'('+str(f2)+')'+\
-            '+ (1/24)*((TDB-'+str(t0)+')**4)*'+'('+str(f3)+')'+\
-            '+ (1/120)*((TDB-'+str(t0)+')**5)*'+'('+str(f4)+')'+\
-            ')%1"'+' clobber=yes'
-    print calc_text
-    os.system(calc_text)
+    ## write column to fits file
+    #calc_text = 'ftcalc '+infile+' '+outfile+' Phase '+\
+    #        '"((TDB-'+str(t0)+')*'+'('+str(f0)+')'+\
+    #        '+ (1/2)*((TDB-'+str(t0)+')**2)*'+'('+str(f1)+')'+\
+    #        '+ (1/6)*((TDB-'+str(t0)+')**3)*'+'('+str(f2)+')'+\
+    #        '+ (1/24)*((TDB-'+str(t0)+')**4)*'+'('+str(f3)+')'+\
+    #        '+ (1/120)*((TDB-'+str(t0)+')**5)*'+'('+str(f4)+')'+\
+    #        ')%1"'+' clobber=yes'
+    #print calc_text
+    #os.system(calc_text)
     phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)
-    print "np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)"
     return phi
