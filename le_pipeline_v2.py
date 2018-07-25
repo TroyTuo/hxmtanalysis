@@ -141,7 +141,7 @@ if args.blinddet:
     det = '13,45,77'
     ## select good event data
     lescreen_text = 'lescreen evtfile='+le_dir+'le_recon.fits gtifile='+le_dir+'le_gti.fits outfile='+le_dir+'le_screen_blind.fits userdetid="'+det+'"'+\
-            ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=0 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
+            ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
             ' clobber=yes history=yes'
     print lescreen_text
     os.system(lescreen_text)
