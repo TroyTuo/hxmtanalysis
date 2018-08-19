@@ -421,4 +421,7 @@ def write_back(specfile, backfile, quiet_flag=True):
         print fparkey_text
         os.system(fparkey_text)
 
-
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]
