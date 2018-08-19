@@ -12,7 +12,7 @@ import os
 def read_par(parname):
     pardata = open(parname,'r')
     stdpar = []
-    parameters = np.zeros(6,dtype='longdouble')
+    parameters = np.zeros(9,dtype='longdouble')
     for par in pardata:
         par = par[0:(len(par)-1)]
         stdpar.append(par)
@@ -36,6 +36,15 @@ def read_par(parname):
         if stdpar[i][:2]=='F4':
             F4_lst = stdpar[i].split(' ');F4 = [x for x in F4_lst if x is not ''][1]
             parameters[5] = np.longdouble(F4)
+        if stdpar[i][:2]=='F5':
+            F5_lst = stdpar[i].split(' ');F5 = [x for x in F5_lst if x is not ''][1]
+            parameters[6] = np.longdouble(F5)
+        if stdpar[i][:2]=='F6':
+            F6_lst = stdpar[i].split(' ');F6 = [x for x in F6_lst if x is not ''][1]
+            parameters[7] = np.longdouble(F6)
+        if stdpar[i][:2]=='F7':
+            F7_lst = stdpar[i].split(' ');F7 = [x for x in F7_lst if x is not ''][1]
+            parameters[8] = np.longdouble(F7)
     print 'parameters=',parameters
     return parameters
 
@@ -58,11 +67,19 @@ def read_data(datalistname):
     data.sort()
     return data
 
-def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=True,bin_profile=1000,threshold=0,std_pro_file='he_pro_std_1000.dat',gen_std_pro=False,out_std_pro_file=''):
+def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,f5_flag=True,f6_flag=True,f7_flag=True,fig_flag=True,bin_profile=1000,threshold=0,std_pro_file='',gen_std_pro=False,out_std_pro_file='',mission='hxmt'):
     ''' NOTICE: this pfold function is different with pfold in function base in hxmtanalysis,
     which fold the profile without parameter file'''
-    MJDREFF = 0.0007660185
-    MJDREFI = 55927
+    if mission=='hxmt' or mission=='HXMT':
+        print 'mission is HXMT...'
+        MJDREFF = 0.0007660185
+        MJDREFI = 55927
+    elif mission=='fermi' or mission=='FERMI':
+        print 'mission is FERMI...'
+        MJDREFF = 0.00074287037037037
+        MJDREFI = 51910
+    else:
+        print 'NO such mission'
     #read parfile and parameters
     parameters = read_par(parfile)
     PEPOCH = parameters[0]
@@ -87,10 +104,22 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
         F4 = parameters[5]
     else:
         F4 = 0
+    if f5_flag:
+        F5 = parameters[6]
+    else:
+        F5 = 0
+    if f6_flag:
+        F6 = parameters[7]
+    else:
+        F6 = 0
+    if f7_flag:
+        F7 = parameters[8]
+    else:
+        F7 = 0
 
     # standard profile
-    std_pro = np.loadtxt(std_pro_file)
-    std_pro = [(x - min(std_pro))/(max(std_pro)-min(std_pro)) for x in std_pro] # Normalization
+    #std_pro = np.loadtxt(std_pro_file)
+    #std_pro = [(x - min(std_pro))/(max(std_pro)-min(std_pro)) for x in std_pro] # Normalization
 
     # seperate data
     edges = np.arange(min(time),max(time),duration)
@@ -131,14 +160,14 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
         if not gen_std_pro:
             #toa calculation
             ## ccf shift
-            y, delay = ccf(p_num,std_pro)
-            p_num_std = np.roll(std_pro,delay)
-            phi_peak = p_num_x[np.where(p_num_std==max(p_num_std))][0]
+            #y, delay = ccf(p_num,std_pro)
+            #p_num_std = np.roll(std_pro,delay)
+            #phi_peak = p_num_x[np.where(p_num_std==max(p_num_std))][0]
+            phi_peak = p_num_x[np.where(p_num == max(p_num))][0]
             toa_tmp = T0 + (1/f0) * phi_peak
             toa_tmp = T0 + (1/f0) * phi_peak/86400
             p_x = np.append(p_x,p_num_x)
             profile = np.append(profile,p_num_unnorm)
-            profile_std.append(p_num_std)
             toa.append(toa_tmp)
 
     if gen_std_pro:
@@ -160,11 +189,19 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
 
     return p_x,profile,toa
 
-def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=False,bin_cs=20,bin_profile=1000,threshold=3e6):
+def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=False,bin_cs=20,bin_profile=1000,threshold=3e6,mission='hxmt'):
     ''' NOTICE: this fsearch function is different with fsearch in function base in hxmtanalysis,
     which calculate best frequency without parameter file'''
-    MJDREFF = 0.0007660185
-    MJDREFI = 55927
+    if mission=='hxmt' or mission=='HXMT':
+        print 'mission is HXMT...'
+        MJDREFF = 0.0007660185
+        MJDREFI = 55927
+    elif mission=='fermi' or mission=='FERMI':
+        print 'mission is FERMI...'
+        MJDREFF = 0.00074287037037037
+        MJDREFI = 51910
+    else:
+        print 'NO such mission'
     #read parfile and parameters
     parameters = read_par(parfile)
     print 'after read',type(parameters[0]),type(parameters[1])
