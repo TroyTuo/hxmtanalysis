@@ -122,9 +122,10 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
     #std_pro = [(x - min(std_pro))/(max(std_pro)-min(std_pro)) for x in std_pro] # Normalization
 
     # seperate data
-    edges = np.arange(min(time),max(time),duration)
-    if duration >= (max(time)-min(time)):
+    if duration == 0 or duration >= (max(time)-min(time)):
         edges = np.array([min(time),max(time)])
+    else:
+        edges = np.arange(min(time),max(time),duration)
     p_x = []
     profile = []
     profile_std = []
@@ -164,8 +165,9 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
             #p_num_std = np.roll(std_pro,delay)
             #phi_peak = p_num_x[np.where(p_num_std==max(p_num_std))][0]
             phi_peak = p_num_x[np.where(p_num == max(p_num))][0]
-            toa_tmp = T0 + (1/f0) * phi_peak
-            toa_tmp = T0 + (1/f0) * phi_peak/86400
+            toa_t0 = min(data)/86400 + MJDREFF + MJDREFI
+            toa_f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
+            toa_tmp = toa_t0 + (1/toa_f0) * phi_peak/86400
             p_x = np.append(p_x,p_num_x)
             profile = np.append(profile,p_num_unnorm)
             toa.append(toa_tmp)
