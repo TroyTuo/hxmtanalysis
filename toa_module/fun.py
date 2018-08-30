@@ -6,13 +6,14 @@ import sys
 import matplotlib.pyplot as plt
 from function import genlc
 from function import ccf
+from tqdm import tqdm
 
 import os
 
 def read_par(parname):
     pardata = open(parname,'r')
     stdpar = []
-    parameters = np.zeros(9,dtype='longdouble')
+    parameters = np.zeros(11,dtype='longdouble')
     for par in pardata:
         par = par[0:(len(par)-1)]
         stdpar.append(par)
@@ -45,6 +46,12 @@ def read_par(parname):
         if stdpar[i][:2]=='F7':
             F7_lst = stdpar[i].split(' ');F7 = [x for x in F7_lst if x is not ''][1]
             parameters[8] = np.longdouble(F7)
+        if stdpar[i][:2]=='F8':
+            F8_lst = stdpar[i].split(' ');F8 = [x for x in F8_lst if x is not ''][1]
+            parameters[9] = np.longdouble(F8)
+        if stdpar[i][:2]=='F9':
+            F9_lst = stdpar[i].split(' ');F9 = [x for x in F9_lst if x is not ''][1]
+            parameters[10] = np.longdouble(F9)
     print 'parameters=',parameters
     return parameters
 
@@ -67,7 +74,8 @@ def read_data(datalistname):
     data.sort()
     return data
 
-def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,f5_flag=True,f6_flag=True,f7_flag=True,fig_flag=True,bin_profile=1000,threshold=0,std_pro_file='',gen_std_pro=False,out_std_pro_file='',mission='hxmt'):
+def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,f5_flag=True,f6_flag=True,f7_flag=True,f8_flag=True,f9_flag=True,
+        fig_flag=True,bin_profile=1000,threshold=0,std_pro_file='',gen_std_pro=False,out_std_pro_file='',mission='hxmt'):
     ''' NOTICE: this pfold function is different with pfold in function base in hxmtanalysis,
     which fold the profile without parameter file'''
     if mission=='hxmt' or mission=='HXMT':
@@ -116,6 +124,14 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
         F7 = parameters[8]
     else:
         F7 = 0
+    if f8_flag:
+        F8 = parameters[9]
+    else:
+        F8 = 0
+    if f9_flag:
+        F9 = parameters[10]
+    else:
+        F9 = 0
 
     # standard profile
     #std_pro = np.loadtxt(std_pro_file)
@@ -129,7 +145,6 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
     p_x = []
     profile = []
     profile_std = []
-    toa = []
     for i in xrange(len(edges[0:-1])):
         edge0 = edges[i]
         edge1 = edges[i+1]
@@ -146,9 +161,16 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
         f2 = F2# + F3*dt + (1/2)*F4*(dt**2)
         f3 = F3# + F4*dt
         f4 = F4
-        print 'f0,f1,f2,f3,f4',f0,f1,f2,f3,f4
+        f5 = F5
+        f6 = F6
+        f7 = F7
+        f8 = F8
+        f9 = F9
+        print 'f0,f1,f2,f3,f4,f5,f6,f7,f8,f9',f0,f1,f2,f3,f4,f5,f6,f7,f8,f9
 
-        phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)
+        phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4 +
+                (1/np.math.factorial(6))*((data-t0)**6)*f5 + (1/np.math.factorial(7))*((data-t0)**7)*f6 + (1/np.math.factorial(8))*((data-t0)**8)*f7 + 
+                (1/np.math.factorial(9))*((data-t0)**9)*f8 + (1/np.math.factorial(10))*((data-t0)**10)*f9 ,1.0)
         bin_x = np.arange(0,1,1.0/bin_profile)
         bin_x = np.append(bin_x,1.0)
         p_num_unnorm = np.histogram(phi,bin_x)[0]
@@ -159,18 +181,8 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
         if np.std(p_num,ddof=1)<threshold:continue
 
         if not gen_std_pro:
-            #toa calculation
-            ## ccf shift
-            #y, delay = ccf(p_num,std_pro)
-            #p_num_std = np.roll(std_pro,delay)
-            #phi_peak = p_num_x[np.where(p_num_std==max(p_num_std))][0]
-            phi_peak = p_num_x[np.where(p_num == max(p_num))][0]
-            toa_t0 = min(data)/86400 + MJDREFF + MJDREFI
-            toa_f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
-            toa_tmp = toa_t0 + (1/toa_f0) * phi_peak/86400
             p_x = np.append(p_x,p_num_x)
             profile = np.append(profile,p_num_unnorm)
-            toa.append(toa_tmp)
 
     if gen_std_pro:
         with open(out_std_pro_file,'w')as f:
@@ -189,7 +201,209 @@ def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=F
              plt.axvline(x=edges[i],linewidth=0.5,color='r')
              plt.axvline(x=edges[i+1],linewidth=0.5,color='b')
 
-    return p_x,profile,toa
+    return p_x,profile
+
+def toa_cal(time,parfile,duration,fstep=0,frange=0,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=True,f4_flag=True,f5_flag=True,f6_flag=True,f7_flag=True,f8_flag=True,f9_flag=True,
+        fig_flag=True,bin_profile=1000,bin_cs=100,threshold=0,std_pro_file='',mission='hxmt',method='pfold'):
+    ''' NOTICE: this pfold function is different with pfold in function base in hxmtanalysis,
+    which fold the profile without parameter file'''
+    if mission=='hxmt' or mission=='HXMT':
+        print 'mission is HXMT...'
+        MJDREFF = 0.0007660185
+        MJDREFI = 55927
+    elif mission=='fermi' or mission=='FERMI':
+        print 'mission is FERMI...'
+        MJDREFF = 0.00074287037037037
+        MJDREFI = 51910
+    else:
+        print 'NO such mission'
+    #read parfile and parameters
+    parameters = read_par(parfile)
+    PEPOCH = parameters[0]
+    pepoch = (PEPOCH - MJDREFF - MJDREFI)*86400
+    if f0_flag:
+        F0 = parameters[1]
+    else:
+        F0 = 0
+    if f1_flag:
+        F1 = parameters[2]
+    else:
+        F1 = 0
+    if f2_flag:
+        F2 = parameters[3]
+    else:
+        F2 = 0
+    if f3_flag:
+        F3 = parameters[4]
+    else:
+        F3 = 0
+    if f4_flag:
+        F4 = parameters[5]
+    else:
+        F4 = 0
+    if f5_flag:
+        F5 = parameters[6]
+    else:
+        F5 = 0
+    if f6_flag:
+        F6 = parameters[7]
+    else:
+        F6 = 0
+    if f7_flag:
+        F7 = parameters[8]
+    else:
+        F7 = 0
+    if f8_flag:
+        F8 = parameters[9]
+    else:
+        F8 = 0
+    if f9_flag:
+        F9 = parameters[10]
+    else:
+        F9 = 0
+
+
+    # seperate data
+    if duration == 0 or duration >= (max(time)-min(time)):
+        edges = np.array([min(time),max(time)])
+    else:
+        edges = np.arange(min(time),max(time),duration)
+
+    toa = np.array([])
+
+    # use two method
+    if method == 'pfold':
+        print "##### calculate ToA by pfold #####"
+        for i in xrange(len(edges[0:-1])):
+            edge0 = edges[i]
+            edge1 = edges[i+1]
+            data = time[ (time>=edge0) & (time<=edge1) ]
+            if len(data)==0:
+                print "EMPTY"
+                continue
+            t0 = min(data)
+    #        t0 = pepoch
+            T0 = t0/86400 + MJDREFF + MJDREFI
+            dt = t0 - pepoch 
+            f0 = F0 + F1*dt + (1/np.math.factorial(2))*F2*(dt**2) + (1/np.math.factorial(3))*F3*(dt**3) + (1/np.math.factorial(4))*F4*(dt**4) + (1/np.math.factorial(5)*F5*(dt**5)) + (1/np.math.factorial(6)*F6*(dt**6)) + (1/np.math.factorial(7)*F7*(dt**7)) + (1/np.math.factorial(8)*F8*(dt**8)) + (1/np.math.factorial(9)*F9*(dt**9)) 
+            f1 = F1 + F2*dt + (1/np.math.factorial(2))*F3*(dt**2) + (1/np.math.factorial(3))*F4*(dt**3) + (1/np.math.factorial(4))*F5*(dt**4) + (1/np.math.factorial(5)*F6*(dt**5)) + (1/np.math.factorial(6)*F7*(dt**6)) + (1/np.math.factorial(7)*F8*(dt**7)) + (1/np.math.factorial(8)*F9*(dt**8))
+            f2 = F2 + F3*dt + (1/np.math.factorial(2))*F4*(dt**2) + (1/np.math.factorial(3))*F5*(dt**3) + (1/np.math.factorial(4))*F6*(dt**4) + (1/np.math.factorial(5)*F7*(dt**5)) + (1/np.math.factorial(6)*F8*(dt**6)) + (1/np.math.factorial(7)*F9*(dt**7))
+            f3 = F3 + F4*dt + (1/np.math.factorial(2))*F5*(dt**2) + (1/np.math.factorial(3))*F6*(dt**3) + (1/np.math.factorial(4))*F7*(dt**4) + (1/np.math.factorial(5)*F8*(dt**5)) + (1/np.math.factorial(6)*F9*(dt**6))
+            f4 = F4 + F5*dt + (1/np.math.factorial(2))*F6*(dt**2) + (1/np.math.factorial(3))*F7*(dt**3) + (1/np.math.factorial(4))*F8*(dt**4) + (1/np.math.factorial(5)*F9*(dt**5))
+            f5 = F5 + F6*dt + (1/np.math.factorial(2))*F7*(dt**2) + (1/np.math.factorial(3))*F8*(dt**3) + (1/np.math.factorial(4))*F9*(dt**4)
+            f6 = F6 + F7*dt + (1/np.math.factorial(2))*F8*(dt**2) + (1/np.math.factorial(3))*F9*(dt**3)
+            f7 = F7 + F8*dt + (1/np.math.factorial(2))*F9*(dt**2)
+            f8 = F8 + F9*dt
+            f9 = F9 
+            print 'f0,f1,f2,f3,f4,f5,f6,f7,f8,f9',f0,f1,f2,f3,f4,f5,f6,f7,f8,f9
+    
+            phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4 +
+                    (1/np.math.factorial(6))*((data-t0)**6)*f5 + (1/np.math.factorial(7))*((data-t0)**7)*f6 + (1/np.math.factorial(8))*((data-t0)**8)*f7 + 
+                    (1/np.math.factorial(9))*((data-t0)**9)*f8 + (1/np.math.factorial(10))*((data-t0)**10)*f9 ,1.0)
+            bin_x = np.arange(0,1,1.0/bin_profile)
+            bin_x = np.append(bin_x,1.0)
+            p_num_unnorm = np.histogram(phi,bin_x)[0]
+            #p_num_unnorm = np.histogram(phi,bin_profile)[0]
+            p_num = p_num_unnorm
+            p_num = [(x - min(p_num))/(max(p_num)-min(p_num)) for x in p_num] # Normalization
+            p_num_x = np.arange(0,1,1.0/bin_profile)
+            if np.std(p_num,ddof=1)<threshold:print('skip this profile');continue
+    
+            
+            if std_pro_file != '':
+                # standard profile
+                std_pro = np.loadtxt(std_pro_file)
+                std_pro = [(x - min(std_pro))/(max(std_pro)-min(std_pro)) for x in std_pro] # Normalization
+                ## ccf shift
+                y, delay = ccf(p_num,std_pro)
+                p_num_std = np.roll(std_pro,delay)
+                phi_peak = p_num_x[np.where(p_num_std==max(p_num_std))][0]
+            else:
+                phi_peak = p_num_x[np.where(p_num == max(p_num))][0]
+            toa_t0 = T0#min(data)/86400 + MJDREFF + MJDREFI
+            toa_f0 = f0#F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
+            toa_tmp = toa_t0 + (1/toa_f0) * phi_peak/86400
+            toa = np.append(toa, toa_tmp)
+    
+            if fig_flag:
+                plt.plot(p_num_x,p_num,'r')
+    elif method == 'fsearch':
+        print "##### calculate ToA by fsearch #####"
+        tf = np.array([])
+        fre = np.array([])
+        fre_err = np.array([])
+        for i in xrange(len(edges[0:-1])):
+            edge0 = edges[i]
+            edge1 = edges[i+1]
+            
+            data = time[ (time>=edge0) & (time<=edge1) ]
+            if len(data)==0:continue
+            t0 = min(data)
+            T0 = t0/86400.0 + MJDREFF + MJDREFI
+            dt = t0 - pepoch 
+            f0 = F0 + F1*dt + (1/np.math.factorial(2))*F2*(dt**2) + (1/np.math.factorial(3))*F3*(dt**3) + (1/np.math.factorial(4))*F4*(dt**4) + (1/np.math.factorial(5)*F5*(dt**5)) + (1/np.math.factorial(6)*F6*(dt**6)) + (1/np.math.factorial(7)*F7*(dt**7)) + (1/np.math.factorial(8)*F8*(dt**8)) + (1/np.math.factorial(9)*F9*(dt**9)) 
+            f1 = F1 + F2*dt + (1/np.math.factorial(2))*F3*(dt**2) + (1/np.math.factorial(3))*F4*(dt**3) + (1/np.math.factorial(4))*F5*(dt**4) + (1/np.math.factorial(5)*F6*(dt**5)) + (1/np.math.factorial(6)*F7*(dt**6)) + (1/np.math.factorial(7)*F8*(dt**7)) + (1/np.math.factorial(8)*F9*(dt**8))
+            f2 = F2 + F3*dt + (1/np.math.factorial(2))*F4*(dt**2) + (1/np.math.factorial(3))*F5*(dt**3) + (1/np.math.factorial(4))*F6*(dt**4) + (1/np.math.factorial(5)*F7*(dt**5)) + (1/np.math.factorial(6)*F8*(dt**6)) + (1/np.math.factorial(7)*F9*(dt**7))
+            f3 = F3 + F4*dt + (1/np.math.factorial(2))*F5*(dt**2) + (1/np.math.factorial(3))*F6*(dt**3) + (1/np.math.factorial(4))*F7*(dt**4) + (1/np.math.factorial(5)*F8*(dt**5)) + (1/np.math.factorial(6)*F9*(dt**6))
+            f4 = F4 + F5*dt + (1/np.math.factorial(2))*F6*(dt**2) + (1/np.math.factorial(3))*F7*(dt**3) + (1/np.math.factorial(4))*F8*(dt**4) + (1/np.math.factorial(5)*F9*(dt**5))
+            f5 = F5 + F6*dt + (1/np.math.factorial(2))*F7*(dt**2) + (1/np.math.factorial(3))*F8*(dt**3) + (1/np.math.factorial(4))*F9*(dt**4)
+            f6 = F6 + F7*dt + (1/np.math.factorial(2))*F8*(dt**2) + (1/np.math.factorial(3))*F9*(dt**3)
+            f7 = F7 + F8*dt + (1/np.math.factorial(2))*F9*(dt**2)
+            f8 = F8 + F9*dt
+            f9 = F9 
+
+            f = np.arange(f0-frange,f0+frange,fstep)
+            chi_square = np.array([])
+            N = len(data)
+            b = N/bin_cs
+            #for f1 in np.arange(-3.72e-10,-3.69e-10,0.5e-12):
+            for j in tqdm(range(0,len(f))):
+#                phi_tmp = np.mod((data-t0)*f[j] + (1.0/2)*((data-t0)**2)*f1 + (1.0/6.0)*((data-t0)**3)*f2 + (1.0/24)*(data-t0)**f3,1.0)
+                phi_tmp = np.mod((data-t0)*f[j] + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4 +
+                        (1/np.math.factorial(6))*((data-t0)**6)*f5 + (1/np.math.factorial(7))*((data-t0)**7)*f6 + (1/np.math.factorial(8))*((data-t0)**8)*f7 + 
+                        (1/np.math.factorial(9))*((data-t0)**9)*f8 + (1/np.math.factorial(10))*((data-t0)**10)*f9 ,1.0)
+                p_num = np.histogram(phi_tmp,bin_cs)[0]
+                #chi_square[j] = np.std(p_num)**2/np.mean(p_num)
+                chi_square = np.append(chi_square,(np.std(p_num)**2/np.mean(p_num)))
+
+            if np.std(p_num,ddof=1)<threshold:print('skip this profile');continue
+            fbest = f[np.where(chi_square==max(chi_square))][0]
+
+            #fold profile by fbest
+            phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4 +
+                    (1/np.math.factorial(6))*((data-t0)**6)*f5 + (1/np.math.factorial(7))*((data-t0)**7)*f6 + (1/np.math.factorial(8))*((data-t0)**8)*f7 + 
+                    (1/np.math.factorial(9))*((data-t0)**9)*f8 + (1/np.math.factorial(10))*((data-t0)**10)*f9 ,1.0)
+            p_num = np.histogram(phi,bin_cs)[0]
+            p_num = (p_num - min(p_num))/(max(p_num)-min(p_num)) # Normalization
+            p_num_x = np.arange(0,1,1.0/bin_cs)
+            if std_pro_file != '':
+                # standard profile
+                std_pro = np.loadtxt(std_pro_file)
+                std_pro = [(x - min(std_pro))/(max(std_pro)-min(std_pro)) for x in std_pro] # Normalization
+                ## ccf shift
+                y, delay = ccf(p_num,std_pro)
+                p_num_std = np.roll(std_pro,delay)
+                phi_peak = p_num_x[np.where(p_num_std==max(p_num_std))][0]
+            else:
+                phi_peak = p_num_x[np.where(p_num == max(p_num))][0]
+
+            toa_t0 = T0
+            toa_f0 = fbest
+            toa_tmp = toa_t0 + (1/toa_f0) * phi_peak/86400
+            toa = np.append(toa, toa_tmp)
+            
+            if fig_flag:
+                plt.figure()
+                plt.subplot(2,1,1)
+                plt.plot(f,chi_square)
+                plt.subplot(2,1,2)
+                plt.step(p_num_x,p_num)
+                if std_pro_file != '':
+                    plt.plot(p_num_x,p_num_std,color='red')
+
+
+    return toa
+
 
 def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=False,bin_cs=20,bin_profile=1000,threshold=3e6,mission='hxmt'):
     ''' NOTICE: this fsearch function is different with fsearch in function base in hxmtanalysis,
@@ -206,7 +420,6 @@ def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag
         print 'NO such mission'
     #read parfile and parameters
     parameters = read_par(parfile)
-    print 'after read',type(parameters[0]),type(parameters[1])
     PEPOCH = parameters[0]
     pepoch = (PEPOCH - MJDREFF - MJDREFI)*86400
     print 'pepoch=',pepoch
@@ -234,64 +447,44 @@ def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag
     edges = np.arange(min(time),max(time),duration)
     if duration >= (max(time)-min(time)):
         edges = np.array([min(time),max(time)])
-    tf = np.zeros(len(edges[0:-1]),dtype='longdouble')
-    fre = np.zeros(len(edges[0:-1]),dtype='longdouble')
-    fre_err = np.zeros(len(edges[0:-1]),dtype='longdouble')
+    tf = np.array([])
+    fre = np.array([])
+    fre_err = np.array([])
     for i in xrange(len(edges[0:-1])):
         edge0 = edges[i]
         edge1 = edges[i+1]
         
         data = time[ (time>=edge0) & (time<=edge1) ]
         if len(data)==0:continue
-        if len(data)<=threshold:continue
-        print min(data),max(data),len(data)
         t0 = min(data)
         T0 = t0/86400.0 + MJDREFF + MJDREFI
         dt = t0 - pepoch 
-        print 'cal f0',type(F0)
-        f0 = F0 + F1*dt + (1.0/2)*F2*(dt**2) + (1.0/6)*F3*(dt**3) + (1.0/24)*F4*(dt**4)
-        f1 = F1 + F2*dt + (1.0/2)*F3*(dt**2) + (1.0/6)*F4*(dt**4)
-        f2 = F2 + F3*dt + (11.0/2)*F4*(dt**2)
+        f0 = F0 + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
+        f1 = F1 + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**4)
+        f2 = F2 + F3*dt + (1/2)*F4*(dt**2)
         f3 = F3 + F4*dt
         f4 = F4
-        print 'f0,f1,f2=',
-        print '{0:.15f}'.format(f0),
-        print '{0:.15f}'.format(f1),f2,type(F0),type(f0)
 
         f = np.arange(f0-frange,f0+frange,fstep)
-        print type(f[0])
-        chi_square = np.zeros(len(f))
         chi_square = np.array([])
         N = len(data)
         b = N/bin_cs
-        for f1 in np.arange(-3.72e-10,-3.69e-10,0.5e-12):
-            for j in range(0,len(f)):
-                phi_tmp = np.mod((data-t0)*f[j] + (1.0/2)*((data-t0)**2)*f1 + (1.0/6.0)*((data-t0)**3)*f2 + (1.0/24)*(data-t0)**f3,1.0)
-                p_num = np.histogram(phi_tmp,bin_cs)[0]
-                #chi_square[j] = np.std(p_num)**2/np.mean(p_num)
-                chi_square = np.append(chi_square,(np.std(p_num)**2/np.mean(p_num)))
-                with open('./f0-f1search/f0-f1_search'+str(j)+'.dat','w')as ffile:
-                    for ichi in chi_square:
-                        ffile.write('%f \n'%ichi)
-            
+        #for f1 in np.arange(-3.72e-10,-3.69e-10,0.5e-12):
+        for j in tqdm(range(0,len(f))):
+            phi_tmp = np.mod((data-t0)*f[j] + (1.0/2)*((data-t0)**2)*f1 + (1.0/6.0)*((data-t0)**3)*f2 + (1.0/24)*(data-t0)**f3,1.0)
+            p_num = np.histogram(phi_tmp,bin_cs)[0]
+            #chi_square[j] = np.std(p_num)**2/np.mean(p_num)
+            chi_square = np.append(chi_square,(np.std(p_num)**2/np.mean(p_num)))
 
-            percent = float(j)*100/len(f)
-            sys.stdout.write(" fsearch complete: %.2f"%percent);
-            sys.stdout.write("%\r");
-            sys.stdout.flush()
-            print "f: ",f
-            print "f1: ",np.arange(-3.72e-10,-3.69e-10,0.5e-12)
-            #fbest = f[np.where(chi_square==max(chi_square))][0]
-            #fre[i] = fbest
-            #tf[i] = T0
-            #fre_err[i] = fstep/(max(chi_square)/bin_cs)
-            #if fig_flag:
+        print '\n'
+        if np.std(p_num,ddof=1)<threshold:print('skip this profile');continue
+        fbest = f[np.where(chi_square==max(chi_square))][0]
+        fre = np.append(fre,fbest)
+        tf  = np.append(tf,T0)
+        fre_err = np.append(fre_err,fstep/(max(chi_square)/bin_cs))
+        if fig_flag:
             plt.figure()
-            #plt.plot(f,chi_square)
-            plt.plot(chi_square)
-    tf = tf[tf>0]
-    fre =fre[fre>0]
-    fre_err = fre_err[fre_err>0]
+            plt.plot(f,chi_square)
 
 #    return p_num_x_2,p_num_2,f,chi_square
     return tf,fre,fre_err
