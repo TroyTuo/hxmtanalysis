@@ -74,7 +74,7 @@ def read_data(datalistname):
     data.sort()
     return data
 
-def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,f5_flag=True,f6_flag=True,f7_flag=True,f8_flag=True,f9_flag=True,
+def pfold(time,parfile,duration,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=True,f4_flag=True,f5_flag=True,f6_flag=True,f7_flag=True,f8_flag=True,f9_flag=True,
         fig_flag=True,bin_profile=1000,threshold=0,std_pro_file='',gen_std_pro=False,out_std_pro_file='',mission='hxmt'):
     ''' NOTICE: this pfold function is different with pfold in function base in hxmtanalysis,
     which fold the profile without parameter file'''
@@ -326,7 +326,11 @@ def toa_cal(time,parfile,duration,fstep=0,frange=0,f0_flag=True,f1_flag=True,f2_
             toa = np.append(toa, toa_tmp)
     
             if fig_flag:
-                plt.plot(p_num_x,p_num,'r')
+                plt.figure()
+                plt.step(p_num_x,p_num)
+                if std_pro_file != '':
+                    plt.plot(p_num_x,p_num_std,color='red')
+
     elif method == 'fsearch':
         print "##### calculate ToA by fsearch #####"
         tf = np.array([])
@@ -405,7 +409,7 @@ def toa_cal(time,parfile,duration,fstep=0,frange=0,f0_flag=True,f1_flag=True,f2_
     return toa
 
 
-def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False,fig_flag=False,bin_cs=20,bin_profile=1000,threshold=3e6,mission='hxmt'):
+def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=True,f4_flag=True,fig_flag=False,bin_cs=20,bin_profile=1000,threshold=3e6,mission='hxmt'):
     ''' NOTICE: this fsearch function is different with fsearch in function base in hxmtanalysis,
     which calculate best frequency without parameter file'''
     if mission=='hxmt' or mission=='HXMT':
@@ -543,7 +547,7 @@ def nor_pro_err(y):
     return sigma
 
 
-def phi_cal(time,parfile,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4_flag=False):
+def phi_cal(time,parfile,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=True,f4_flag=True,f5_flag=True,f6_flag=True,f7_flag=True,f8_flag=True,f9_flag=True):
     MJDREFF = 0.0007660185
     MJDREFI = 55927
     #read parfile and parameters
@@ -570,18 +574,44 @@ def phi_cal(time,parfile,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4
         F4 = parameters[5]
     else:
         F4 = 0
+    if f5_flag:
+        F5 = parameters[6]
+    else:
+        F5 = 0
+    if f6_flag:
+        F6 = parameters[7]
+    else:
+        F6 = 0
+    if f7_flag:
+        F7 = parameters[8]
+    else:
+        F7 = 0
+    if f8_flag:
+        F8 = parameters[9]
+    else:
+        F8 = 0
+    if f9_flag:
+        F9 = parameters[10]
+    else:
+        F9 = 0
+
 
     data = time
 #    t0 = min(data)
     t0 = pepoch # !!! set one reference point
     T0 = t0/86400 + MJDREFF + MJDREFI
     dt = t0 - pepoch 
-    f0 = F0# + F1*dt + (1/2)*F2*(dt**2) + (1/6)*F3*(dt**3) + (1/24)*F4*(dt**4)
-    f1 = F1# + F2*dt + (1/2)*F3*(dt**2) + (1/6)*F4*(dt**3)
-    f2 = F2# + F3*dt + (1/2)*F4*(dt**2)
-    f3 = F3# + F4*dt
+    f0 = F0
+    f1 = F1
+    f2 = F2
+    f3 = F3
     f4 = F4
-    print "periodic parameters: ",f0,f1,f2,f3,f4
+    f5 = F5
+    f6 = F6
+    f7 = F7
+    f8 = F8
+    f9 = F9 
+    print 'periodic parameters',f0,f1,f2,f3,f4,f5,f6,f7,f8,f9
 
     ## write column to fits file
     #calc_text = 'ftcalc '+infile+' '+outfile+' Phase '+\
@@ -593,5 +623,7 @@ def phi_cal(time,parfile,f0_flag=True,f1_flag=True,f2_flag=True,f3_flag=False,f4
     #        ')%1"'+' clobber=yes'
     #print calc_text
     #os.system(calc_text)
-    phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4,1.0)
+    phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4 +
+            (1/np.math.factorial(6))*((data-t0)**6)*f5 + (1/np.math.factorial(7))*((data-t0)**7)*f6 + (1/np.math.factorial(8))*((data-t0)**8)*f7 + 
+            (1/np.math.factorial(9))*((data-t0)**9)*f8 + (1/np.math.factorial(10))*((data-t0)**10)*f9 ,1.0)
     return phi
