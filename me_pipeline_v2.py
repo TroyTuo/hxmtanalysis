@@ -76,7 +76,7 @@ def main():
     if args.bigfovdet:
         print 'function not available'
     if args.smfovdet:
-        det = det + '0-7,11-25,29-43,47-53'
+        det = det + '0-5,7,12-23,25,30-41,43,48-53'
     if args.blinddet:
         det = det + '10,28,46'
     if args.detlist:
@@ -112,8 +112,3 @@ else:
     product_dir = args.output
     main()
 
-
-#aux_dir = product_dir + "/AUX/" # AUX path
-#acs_dir = product_dir + "/ACS/" # ACS path
-#me_dir = product_dir + "/ME/"   # HE  path
-#print aux_dir,acs_dir,me_dir
