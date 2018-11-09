@@ -48,7 +48,7 @@ def main():
     preciseorbitname = orbitname
     attname = sorted(glob.glob(data_dir + '/ACS/*_Att_*V[1-9]*'))[-1]
     tempfilename = sorted(glob.glob(data_dir + '/ME/HXMT*TH*V[1-9]*'))[-1]
-    ehkfilename = aux_dir + "EHK.fits"
+    ehkfilename = sorted(glob.glob(data_dir + '/AUX/*EHK*_V[1-9]*'))[-1]
     gainfilename = commands.getstatusoutput('ls $CALDB/data/hxmt/me/bcf/*gain*')[1]
     
     # select good time intervals utilizing HXMT software
@@ -60,7 +60,7 @@ def main():
     
     ## gti selection
     megtigen_text = 'megtigen tempfile='+tempfilename+' ehkfile='+ehkfilename+' outfile='+me_dir+'me_gti.fits'+\
-            ' defaultexpr=NONE expr="ELV>10&&COR>8&&T_SAA>100&&TN_SAA>100"'+\
+            ' defaultexpr=NONE expr="ELV>10&&COR>8&&T_SAA>100&&TN_SAA>100&&ANG_DIST<=0.1"'+\
             ' clobber=yes history=yes'
     print megtigen_text
     os.system(megtigen_text) 
@@ -72,32 +72,59 @@ def main():
     os.system(megrade_text)
     
     ## select detectors
-    det = ''
-    if args.bigfovdet:
-        print 'function not available'
     if args.smfovdet:
-        det = det + '0-5,7,12-23,25,30-41,43,48-53'
-    if args.blinddet:
-        det = det + '10,28,46'
-    if args.detlist:
-        det = det + args.detlist;
-    print 'detector_list:',det
-    
-    mescreen_text = 'mescreen evtfile='+me_dir+'me_grade.fits gtifile='+me_dir+'me_gti.fits outfile='+me_dir+'me_screen.fits '+\
-    ' baddetfile=$HEADAS/refdata/medetectorstatus.fits'+\
-    ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024'
-    print mescreen_text
-    os.system(mescreen_text)
-    
-    # carry out barycentering correction
-    if args.hxbary:
-        # carry out hxbary
-        ra = args.ra
-        dec = args.dec
-        hxbary_text = 'hxbary' + ' ' + me_dir + 'me_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-        print hxbary_text
-        os.system(hxbary_text)
+        det = '0-5,7,12-23,25,30-41,43,48-53 '
+        print 'small FoV detector list:',det
+        mescreen_text = 'mescreen evtfile='+me_dir+'me_grade.fits gtifile='+me_dir+'me_gti.fits outfile='+me_dir+'me_screen_smfov.fits '+\
+        ' baddetfile=$HEADAS/refdata/medetectorstatus.fits'+\
+        ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024 clobber=yes'
+        print mescreen_text
+        os.system(mescreen_text)
+        
+        # carry out barycentering correction
+        if args.hxbary:
+            # carry out hxbary
+            ra = args.ra
+            dec = args.dec
+            hxbary_text = 'hxbary' + ' ' + me_dir + 'me_screen_smfov.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            print hxbary_text
+            os.system(hxbary_text)
 
+    if args.blinddet:
+        det = '10,28,46'
+        print 'blind detector list:',det
+        mescreen_text = 'mescreen evtfile='+me_dir+'me_grade.fits gtifile='+me_dir+'me_gti.fits outfile='+me_dir+'me_screen_blind.fits '+\
+        ' baddetfile=$HEADAS/refdata/medetectorstatus.fits'+\
+        ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024 clobber=yes'
+        print mescreen_text
+        os.system(mescreen_text)
+        
+        # carry out barycentering correction
+        if args.hxbary:
+            # carry out hxbary
+            ra = args.ra
+            dec = args.dec
+            hxbary_text = 'hxbary' + ' ' + me_dir + 'me_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            print hxbary_text
+            os.system(hxbary_text)
+
+    if args.detlist:
+        det = args.detlist;
+        print 'detector_list:',det
+        mescreen_text = 'mescreen evtfile='+me_dir+'me_grade.fits gtifile='+me_dir+'me_gti.fits outfile='+me_dir+'me_screen.fits '+\
+        ' baddetfile=$HEADAS/refdata/medetectorstatus.fits'+\
+        ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024 clobber=yes'
+        print mescreen_text
+        os.system(mescreen_text)
+        
+        # carry out barycentering correction
+        if args.hxbary:
+            # carry out hxbary
+            ra = args.ra
+            dec = args.dec
+            hxbary_text = 'hxbary' + ' ' + me_dir + 'me_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            print hxbary_text
+            os.system(hxbary_text)
 
 
 if args.inputlist:
