@@ -92,18 +92,17 @@ def main():
     
     # select good time intervals utilizing HXMT software
     ## pi calculation
-    if not os.path.isfile(he_dir+'he_pi.fits'):
-        hepical_text = 'hepical evtfile='+filename+' outfile='+he_dir+'he_pi.fits clobber=yes'
-        os.system(hepical_text)
-        print hepical_text
+    hepical_text = 'hepical evtfile='+filename+' outfile='+he_dir+'he_pi.fits clobber=yes'
+    print hepical_text
+    os.system(hepical_text)
     ## gti selection
     hegtigen_text = 'hegtigen hvfile='+hvfilename+\
     ' tempfile='+tempfilename+' pmfile='+pmfilename+\
     ' outfile='+he_dir+'he_gti.fits ehkfile='+ehkfilename+\
-    ' defaultexpr=NONE expr="ELV>6&&COR>8&&TN_SAA>100&&T_SAA>100"'+\
+    ' defaultexpr=NONE expr="ELV>6&&COR>8&&TN_SAA>100&&T_SAA>100&&ANG_DIST<=0.1"'+\
     ' pmexpr="" clobber=yes history=yes'
-    os.system(hegtigen_text) 
     print hegtigen_text
+    os.system(hegtigen_text) 
     
     ## select good Events
     det = ''
@@ -111,93 +110,89 @@ def main():
         det = det + args.detlist
         # select NaI Events
         if args.nai:
-            if not os.path.isfile(he_dir+'he_screen_NaI.fits'):
-                hescreen_text = 'hescreen evtfile="'+he_dir+'he_pi.fits" gtifile="'+he_dir+'he_gti.fits" outfile="'+he_dir+'he_screen_NaI.fits"'+\
-                ' baddetfile="" userdetid="'+det+'" eventtype=1 anticoincidence=""'+\
-                ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
-                ' minpulsewidth=54 maxpulsewidth=70'+\
-                ' clobber=yes history=yes'
-                os.system(hescreen_text)
-                print hescreen_text
-                # carry out barycentering correction
-                if args.hxbary:
-                    try:
-                        os.system('cp ' + preciseorbitname + ' ' + acs_dir)
-                        # carry out hxbary
-                        ra = args.ra
-                        dec = args.dec
-                        hxbary_text = 'hxbary' + ' ' + he_dir + 'he_screen_NaI.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-                        print hxbary_text
-                        os.system(hxbary_text)
-                    except:
-                        print 'WARNING: NO Precise Orbit file('+data_dir+')'
+            hescreen_text = 'hescreen evtfile="'+he_dir+'he_pi.fits" gtifile="'+he_dir+'he_gti.fits" outfile="'+he_dir+'he_screen_NaI.fits"'+\
+            ' baddetfile="" userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
+            ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
+            ' minpulsewidth=54 maxpulsewidth=70'+\
+            ' clobber=yes history=yes'
+            print hescreen_text
+            os.system(hescreen_text)
+            # carry out barycentering correction
+            if args.hxbary:
+                try:
+                    os.system('cp ' + preciseorbitname + ' ' + acs_dir)
+                    # carry out hxbary
+                    ra = args.ra
+                    dec = args.dec
+                    hxbary_text = 'hxbary' + ' ' + he_dir + 'he_screen_NaI.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+                    print hxbary_text
+                    os.system(hxbary_text)
+                except:
+                    print 'WARNING: NO Precise Orbit file('+data_dir+')'
         else:
-            if not os.path.isfile(he_dir+'he_screen.fits'):
-                hescreen_text = 'hescreen evtfile="'+he_dir+'he_pi.fits" gtifile="'+he_dir+'he_gti.fits" outfile="'+he_dir+'he_screen.fits"'+\
-                ' baddetfile="" userdetid="'+det+'" eventtype=1 anticoincidence=""'+\
-                ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
-                ' minpulsewidth=20 maxpulsewidth=70'+\
-                ' clobber=yes history=yes'
-                os.system(hescreen_text)
-                print hescreen_text
-                # carry out barycentering correction
-                if args.hxbary:
-                    try:
-                        os.system('cp ' + preciseorbitname + ' ' + acs_dir)
-                        # carry out hxbary
-                        ra = args.ra
-                        dec = args.dec
-                        hxbary_text = 'hxbary' + ' ' + he_dir + 'he_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-                        print hxbary_text
-                        os.system(hxbary_text)
-                    except:
-                        print 'WARNING: NO Precise Orbit file('+data_dir+')'
+            hescreen_text = 'hescreen evtfile="'+he_dir+'he_pi.fits" gtifile="'+he_dir+'he_gti.fits" outfile="'+he_dir+'he_screen.fits"'+\
+            ' baddetfile="" userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
+            ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
+            ' minpulsewidth=20 maxpulsewidth=70'+\
+            ' clobber=yes history=yes'
+            os.system(hescreen_text)
+            print hescreen_text
+            # carry out barycentering correction
+            if args.hxbary:
+                try:
+                    os.system('cp ' + preciseorbitname + ' ' + acs_dir)
+                    # carry out hxbary
+                    ra = args.ra
+                    dec = args.dec
+                    hxbary_text = 'hxbary' + ' ' + he_dir + 'he_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+                    print hxbary_text
+                    os.system(hxbary_text)
+                except:
+                    print 'WARNING: NO Precise Orbit file('+data_dir+')'
     
     if args.blinddet:
         det = '16'
         # select NaI Events
         if args.nai:
-            if not os.path.isfile(he_dir+'he_screen_NaI_blind.fits'):
-                hescreen_text = 'hescreen evtfile="'+he_dir+'he_pi.fits" gtifile="'+he_dir+'he_gti.fits" outfile="'+he_dir+'he_screen_NaI_blind.fits"'+\
-                ' baddetfile="" userdetid="'+det+'" eventtype=1 anticoincidence=""'+\
-                ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
-                ' minpulsewidth=54 maxpulsewidth=70'+\
-                ' clobber=yes history=yes'
-                os.system(hescreen_text)
-                print hescreen_text
-                # carry out barycentering correction
-                if args.hxbary:
-                    try:
-                        os.system('cp ' + preciseorbitname + ' ' + acs_dir)
-                        # carry out hxbary
-                        ra = args.ra
-                        dec = args.dec
-                        hxbary_text = 'hxbary' + ' ' + he_dir + 'he_screen_NaI_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-                        print hxbary_text
-                        os.system(hxbary_text)
-                    except:
-                        print 'WARNING: NO Precise Orbit file('+data_dir+')'
+            hescreen_text = 'hescreen evtfile="'+he_dir+'he_pi.fits" gtifile="'+he_dir+'he_gti.fits" outfile="'+he_dir+'he_screen_NaI_blind.fits"'+\
+            ' baddetfile="$HEADAS/refdata/hedetectorstatus.fits" userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
+            ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
+            ' minpulsewidth=54 maxpulsewidth=70'+\
+            ' clobber=yes history=yes'
+            print hescreen_text
+            os.system(hescreen_text)
+            # carry out barycentering correction
+            if args.hxbary:
+                try:
+                    os.system('cp ' + preciseorbitname + ' ' + acs_dir)
+                    # carry out hxbary
+                    ra = args.ra
+                    dec = args.dec
+                    hxbary_text = 'hxbary' + ' ' + he_dir + 'he_screen_NaI_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+                    print hxbary_text
+                    os.system(hxbary_text)
+                except:
+                    print 'WARNING: NO Precise Orbit file('+data_dir+')'
         else:
-            if not os.path.isfile(he_dir+'he_screen_blind.fits'):
-                hescreen_text = 'hescreen evtfile="'+he_dir+'he_pi.fits" gtifile="'+he_dir+'he_gti.fits" outfile="'+he_dir+'he_screen_blind.fits"'+\
-                ' baddetfile="" userdetid="'+det+'" eventtype=1 anticoincidence=""'+\
-                ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
-                ' minpulsewidth=20 maxpulsewidth=70'+\
-                ' clobber=yes history=yes'
-                os.system(hescreen_text)
-                print hescreen_text
-                # carry out barycentering correction
-                if args.hxbary:
-                    try:
-                        os.system('cp ' + preciseorbitname + ' ' + acs_dir)
-                        # carry out hxbary
-                        ra = args.ra
-                        dec = args.dec
-                        hxbary_text = 'hxbary' + ' ' + he_dir + 'he_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-                        print hxbary_text
-                        os.system(hxbary_text)
-                    except:
-                        print 'WARNING: NO Precise Orbit file('+data_dir+')'
+            hescreen_text = 'hescreen evtfile="'+he_dir+'he_pi.fits" gtifile="'+he_dir+'he_gti.fits" outfile="'+he_dir+'he_screen_blind.fits"'+\
+            ' baddetfile="$HEADAS/refdata/hedetectorstatus.fits" userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
+            ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
+            ' minpulsewidth=20 maxpulsewidth=70'+\
+            ' clobber=yes history=yes'
+            print hescreen_text
+            os.system(hescreen_text)
+            # carry out barycentering correction
+            if args.hxbary:
+                try:
+                    os.system('cp ' + preciseorbitname + ' ' + acs_dir)
+                    # carry out hxbary
+                    ra = args.ra
+                    dec = args.dec
+                    hxbary_text = 'hxbary' + ' ' + he_dir + 'he_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+                    print hxbary_text
+                    os.system(hxbary_text)
+                except:
+                    print 'WARNING: NO Precise Orbit file('+data_dir+')'
 
 if args.inputlist:
     inputfile = open(args.inputlist)

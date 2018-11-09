@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ##################################
-#Notice: The Pipeline applies to LE data with HXMTSoftware(V1) 
+#Notice: The Pipeline applies to LE data with HXMTSoftware(V2) 
 #################################
 
 
@@ -8,7 +8,7 @@ import argparse
 import os
 import commands
 import glob
-import pyfits as pf
+from astropy.io import fits as pf
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -66,7 +66,7 @@ def main():
     ## gti selection
     legtigen_text = 'legtigen evtfile='+filename+' instatusfile='+instatusfilename+' tempfile='+tempfilename+' ehkfile='+ehkfilename+\
             ' outfile='+le_dir+'le_gti.fits defaultexpr=NONE rangefile=$HEADAS/refdata/lerangefile.fits'+\
-            ' expr="ELV>10&&DYE_ELV>40&&COR>8&&T_SAA>=100&&TN_SAA>=100"'+\
+            ' expr="ELV>10&&DYE_ELV>40&&COR>8&&T_SAA>=100&&TN_SAA>=100&&ANG_DIST<=0.1"'+\
             ' clobber=yes history=yes'
     print legtigen_text
     os.system(legtigen_text) 
@@ -87,22 +87,64 @@ def main():
         det = det + args.detlist;
     print 'detector_list:',det
     
-    ## select good event data
-    lescreen_text = 'lescreen evtfile='+le_dir+'le_recon.fits gtifile='+le_dir+'le_gti.fits outfile='+le_dir+'le_screen.fits userdetid="'+det+'"'+\
-            ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
-            ' clobber=yes history=yes'
-    print lescreen_text
-    os.system(lescreen_text)
-    
-    ## carry out barycentering correction
-    if args.hxbary:
-        # carry out hxbary
-        ra = args.ra
-        dec = args.dec
-        hxbary_text = 'hxbary' + ' ' + le_dir + 'le_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-        print hxbary_text
-        os.system(hxbary_text)
+    if args.smfovdet:
+        det =   '0,2-4,6-10,12,14,20,22-26,28-30;'+\
+                '32,34-36,38-42,44,46,52,54-58,60-62;'+\
+                '64,66-68,70-74,76,78,84,86-90,92-94;'
+        print "small FoV detector list:",det
+        ## select good event data
+        lescreen_text = 'lescreen evtfile='+le_dir+'le_recon.fits gtifile='+le_dir+'le_gti.fits outfile='+le_dir+'le_screen_smfov.fits userdetid="'+det+'"'+\
+                ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
+                ' clobber=yes history=yes'
+        print lescreen_text
+        os.system(lescreen_text)
+        
+        ## carry out barycentering correction
+        if args.hxbary:
+            # carry out hxbary
+            ra = args.ra
+            dec = args.dec
+            hxbary_text = 'hxbary' + ' ' + le_dir + 'le_screen_smfov.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            print hxbary_text
+            os.system(hxbary_text)
 
+    if args.blinddet:
+        det =  '13,45,77'
+        print "blind detector list:",det
+        ## select good event data
+        lescreen_text = 'lescreen evtfile='+le_dir+'le_recon.fits gtifile='+le_dir+'le_gti.fits outfile='+le_dir+'le_screen_blind.fits userdetid="'+det+'"'+\
+                ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
+                ' clobber=yes history=yes'
+        print lescreen_text
+        os.system(lescreen_text)
+        
+        ## carry out barycentering correction
+        if args.hxbary:
+            # carry out hxbary
+            ra = args.ra
+            dec = args.dec
+            hxbary_text = 'hxbary' + ' ' + le_dir + 'le_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            print hxbary_text
+            os.system(hxbary_text)
+
+    if args.detlist:
+        det =  args.detlist;
+        print "detector list:",det
+        ## select good event data
+        lescreen_text = 'lescreen evtfile='+le_dir+'le_recon.fits gtifile='+le_dir+'le_gti.fits outfile='+le_dir+'le_screen.fits userdetid="'+det+'"'+\
+                ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
+                ' clobber=yes history=yes'
+        print lescreen_text
+        os.system(lescreen_text)
+        
+        ## carry out barycentering correction
+        if args.hxbary:
+            # carry out hxbary
+            ra = args.ra
+            dec = args.dec
+            hxbary_text = 'hxbary' + ' ' + le_dir + 'le_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            print hxbary_text
+            os.system(hxbary_text)
 
 if args.inputlist:
     inputfile = open(args.inputlist)
