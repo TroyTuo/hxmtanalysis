@@ -140,8 +140,10 @@ def readhv(hvfilename,phonum=0):
 
 
 
-def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_cs=20,bin_profile=20):
+def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_cs=20,bin_profile=20,t0=0):
 
+    if t0 == 0:
+        t0 =min(data)
     #data = raw_data - min(raw_data);data.sort();
     raw_data = data
     #data = data - data[0]
@@ -156,6 +158,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
 
 
     for i in range(0,len(f)):
+        data = data - t_0
         phi_tmp = np.mod(data*f[i] + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
         p_num = np.histogram(phi_tmp,bin_cs)[0]
         bb = b * np.ones(bin_cs)
