@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # find and create data dir list
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description='Example: python me_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --smfovdet --blinddet --hxbary -r 83.63322083 -d 22.014461')
 parser.add_argument("-i","--input",help="data archived path")
 parser.add_argument("-I","--inputlist",help="data archived path in list",type=str)
 parser.add_argument("-o","--output",help="products archived path")
@@ -31,8 +31,9 @@ args = parser.parse_args()
 def main():
     aux_dir = product_dir + "/AUX/" # AUX path
     acs_dir = product_dir + "/ACS/" # ACS path
-    me_dir = product_dir + "/ME/"   # HE  path
-    print aux_dir,acs_dir,me_dir
+    me_dir = product_dir + "/ME/"   # ME  path
+    clean_dir = product_dir + "/ME/cleaned/"  # ME cleaned data path
+    tmp_dir = product_dir + "/ME/tmp/" # ME temporary data
 
 
     #make directory for data structure
@@ -40,6 +41,8 @@ def main():
     if not os.path.isdir(aux_dir):os.system('mkdir -p ' +aux_dir)
     if not os.path.isdir(acs_dir):os.system('mkdir -p ' +acs_dir)
     if not os.path.isdir(me_dir):os.system('mkdir -p '+me_dir)
+    if not os.path.isdir(clean_dir):os.system('mkdir -p '+clean_dir)
+    if not os.path.isdir(tmp_dir):os.system('mkdir -p '+tmp_dir)
     
     #read filenames
     print data_dir
@@ -53,29 +56,37 @@ def main():
     
     # select good time intervals utilizing HXMT software
     ## pi calculation
-    mepical_text = 'mepical evtfile='+filename+' tempfile='+tempfilename+' outfile='+me_dir+'me_pi.fits gainfile='+gainfilename+\
+    mepical_text = 'mepical evtfile='+filename+' tempfile='+tempfilename+' outfile='+tmp_dir+'me_pi.fits '+\
             ' clobber=yes history=yes'
     print mepical_text
     os.system(mepical_text)
     
     ## gti selection
-    megtigen_text = 'megtigen tempfile='+tempfilename+' ehkfile='+ehkfilename+' outfile='+me_dir+'me_gti.fits'+\
-            ' defaultexpr=NONE expr="ELV>10&&COR>8&&T_SAA>100&&TN_SAA>100&&ANG_DIST<=0.1"'+\
+    megtigen_text = 'megtigen tempfile='+tempfilename+' ehkfile='+ehkfilename+' outfile='+tmp_dir+'me_gti.fits'+\
+            ' defaultexpr=NONE expr="ELV>10&&COR>8&&T_SAA>300&&TN_SAA>300&&ANG_DIST<=0.04"'+\
             ' clobber=yes history=yes'
     print megtigen_text
     os.system(megtigen_text) 
     
     ## ME events reconstruction & deadtime calculation
-    megrade_text = 'megrade evtfile='+me_dir+'me_pi.fits'+' outfile='+me_dir+'me_grade.fits deadfile='+me_dir+'me_dtime.fits binsize=1'+\
+    megrade_text = 'megrade evtfile='+tmp_dir+'me_pi.fits'+' outfile='+tmp_dir+'me_grade.fits deadfile='+tmp_dir+'me_dtime.fits binsize=1'+\
             ' clobber=yes history=yes'
     print megrade_text
     os.system(megrade_text)
+
+    ## new gti selection
+    menewgti_text = 'megti '+tmp_dir+'me_grade.fits '+tmp_dir+'me_gti.fits '+tmp_dir+'me_gti_new.fits'
+    print(menewgti_text)
+    try:
+        os.system(menewgti_text)
+    except:
+        print "ERROR: couldn't find megti program"
     
     ## select detectors
     if args.smfovdet:
         det = '0-5,7,12-23,25,30-41,43,48-53 '
         print 'small FoV detector list:',det
-        mescreen_text = 'mescreen evtfile='+me_dir+'me_grade.fits gtifile='+me_dir+'me_gti.fits outfile='+me_dir+'me_screen_smfov.fits '+\
+        mescreen_text = 'mescreen evtfile='+tmp_dir+'me_grade.fits gtifile='+tmp_dir+'me_gti_new.fits outfile='+clean_dir+'me_screen_smfov.fits '+\
         ' baddetfile=$HEADAS/refdata/medetectorstatus.fits'+\
         ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024 clobber=yes'
         print mescreen_text
@@ -86,14 +97,14 @@ def main():
             # carry out hxbary
             ra = args.ra
             dec = args.dec
-            hxbary_text = 'hxbary' + ' ' + me_dir + 'me_screen_smfov.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            hxbary_text = 'hxbary' + ' ' + clean_dir + 'me_screen_smfov.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
             print hxbary_text
             os.system(hxbary_text)
 
     if args.blinddet:
         det = '10,28,46'
         print 'blind detector list:',det
-        mescreen_text = 'mescreen evtfile='+me_dir+'me_grade.fits gtifile='+me_dir+'me_gti.fits outfile='+me_dir+'me_screen_blind.fits '+\
+        mescreen_text = 'mescreen evtfile='+tmp_dir+'me_grade.fits gtifile='+tmp_dir+'me_gti_new.fits outfile='+clean_dir+'me_screen_blind.fits '+\
         ' baddetfile=$HEADAS/refdata/medetectorstatus.fits'+\
         ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024 clobber=yes'
         print mescreen_text
@@ -104,14 +115,14 @@ def main():
             # carry out hxbary
             ra = args.ra
             dec = args.dec
-            hxbary_text = 'hxbary' + ' ' + me_dir + 'me_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            hxbary_text = 'hxbary' + ' ' + clean_dir + 'me_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
             print hxbary_text
             os.system(hxbary_text)
 
     if args.detlist:
         det = args.detlist;
         print 'detector_list:',det
-        mescreen_text = 'mescreen evtfile='+me_dir+'me_grade.fits gtifile='+me_dir+'me_gti.fits outfile='+me_dir+'me_screen.fits '+\
+        mescreen_text = 'mescreen evtfile='+tmp_dir+'me_grade.fits gtifile='+tmp_dir+'me_gti_new.fits outfile='+clean_dir+'me_screen.fits '+\
         ' baddetfile=$HEADAS/refdata/medetectorstatus.fits'+\
         ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024 clobber=yes'
         print mescreen_text
@@ -122,7 +133,7 @@ def main():
             # carry out hxbary
             ra = args.ra
             dec = args.dec
-            hxbary_text = 'hxbary' + ' ' + me_dir + 'me_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            hxbary_text = 'hxbary' + ' ' + clean_dir + 'me_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
             print hxbary_text
             os.system(hxbary_text)
 
@@ -134,6 +145,8 @@ if args.inputlist:
         data_dir = data_dir[0:-1]
         product_dir = product_dir[0:-1]
         main()
+elif args.input == None:
+    print 'WARNING: no inputs. "python me_pipeline_v2.py -h" see help'
 else:
     data_dir = args.input
     product_dir = args.output

@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # find and create data dir list
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description='Example: python le_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --smfovdet --blinddet --hxbary -r 83.63322083 -d 22.014461')
 parser.add_argument("-i","--input",help="data archived path")
 parser.add_argument("-I","--inputlist",help="data archived path in list",type=str)
 parser.add_argument("-o","--output",help="products archived path")
@@ -32,7 +32,9 @@ args = parser.parse_args()
 def main():
     aux_dir = product_dir + "/AUX/" # AUX path
     acs_dir = product_dir + "/ACS/" # ACS path
-    le_dir = product_dir + "/LE/"   # HE  path
+    le_dir = product_dir + "/LE/"   # LE  path
+    clean_dir = product_dir + "/LE/cleaned/"  # LE cleaned data path
+    tmp_dir = product_dir + "/LE/tmp/" # LE temporary data
     
     
     #make direction for data structure
@@ -40,6 +42,8 @@ def main():
     if not os.path.isdir(aux_dir):os.system('mkdir -p ' +aux_dir)
     if not os.path.isdir(acs_dir):os.system('mkdir -p ' +acs_dir)
     if not os.path.isdir(le_dir):os.system('mkdir -p '+le_dir)
+    if not os.path.isdir(clean_dir):os.system('mkdir -p '+clean_dir)
+    if not os.path.isdir(tmp_dir):os.system('mkdir -p '+tmp_dir)
     
     #read filenames
     filename = sorted(glob.glob(data_dir + '/LE/*LE-Evt_FFFFFF_V[1-9]*'))[-1]
@@ -53,23 +57,30 @@ def main():
     
     # select good time intervals utilizing HXMT software
     ## pi calculation
-    lepical_text = 'lepical evtfile='+filename+' tempfile='+tempfilename+' outfile='+le_dir+'le_pi.fits gainfile='+gainfilename+\
+    lepical_text = 'lepical evtfile='+filename+' tempfile='+tempfilename+' outfile='+tmp_dir+'le_pi.fits'+\
             ' clobber=yes history=yes'
     print lepical_text
     os.system(lepical_text)
     
     ## le reconstruction
-    lerecon_text = 'lerecon evtfile='+le_dir+'le_pi.fits outfile='+le_dir+'le_recon.fits instatusfile='+instatusfilename+' clobber=yes history=yes'
+    lerecon_text = 'lerecon evtfile='+tmp_dir+'le_pi.fits outfile='+tmp_dir+'le_recon.fits instatusfile='+instatusfilename+' clobber=yes history=yes'
     print lerecon_text
     os.system(lerecon_text)
     
     ## gti selection
     legtigen_text = 'legtigen evtfile='+filename+' instatusfile='+instatusfilename+' tempfile='+tempfilename+' ehkfile='+ehkfilename+\
-            ' outfile='+le_dir+'le_gti.fits defaultexpr=NONE rangefile=$HEADAS/refdata/lerangefile.fits'+\
-            ' expr="ELV>10&&DYE_ELV>40&&COR>8&&T_SAA>=100&&TN_SAA>=100&&ANG_DIST<=0.1"'+\
+            ' outfile='+tmp_dir+'le_gti.fits defaultexpr=NONE rangefile=$HEADAS/refdata/lerangefile.fits'+\
+            ' expr="ELV>10&&DYE_ELV>40&&COR>8&&T_SAA>=300&&TN_SAA>=300&&ANG_DIST<=0.04"'+\
             ' clobber=yes history=yes'
     print legtigen_text
     os.system(legtigen_text) 
+    ## new git selection
+    lenewgti_text = 'legti '+tmp_dir+'le_recon.fits '+tmp_dir+'le_gti.fits '+tmp_dir+'le_gti_new.fits'
+    print(lenewgti_text)
+    try:
+        os.system(lenewgti_text)
+    except:
+        print "ERROR: couldn't find legti program"
     
     ## detector selection
     det = ''
@@ -93,7 +104,7 @@ def main():
                 '64,66-68,70-74,76,78,84,86-90,92-94;'
         print "small FoV detector list:",det
         ## select good event data
-        lescreen_text = 'lescreen evtfile='+le_dir+'le_recon.fits gtifile='+le_dir+'le_gti.fits outfile='+le_dir+'le_screen_smfov.fits userdetid="'+det+'"'+\
+        lescreen_text = 'lescreen evtfile='+tmp_dir+'le_recon.fits gtifile='+tmp_dir+'le_gti_new.fits outfile='+clean_dir+'le_screen_smfov.fits userdetid="'+det+'"'+\
                 ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
                 ' clobber=yes history=yes'
         print lescreen_text
@@ -104,7 +115,7 @@ def main():
             # carry out hxbary
             ra = args.ra
             dec = args.dec
-            hxbary_text = 'hxbary' + ' ' + le_dir + 'le_screen_smfov.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen_smfov.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
             print hxbary_text
             os.system(hxbary_text)
 
@@ -112,7 +123,7 @@ def main():
         det =  '13,45,77'
         print "blind detector list:",det
         ## select good event data
-        lescreen_text = 'lescreen evtfile='+le_dir+'le_recon.fits gtifile='+le_dir+'le_gti.fits outfile='+le_dir+'le_screen_blind.fits userdetid="'+det+'"'+\
+        lescreen_text = 'lescreen evtfile='+tmp_dir+'le_recon.fits gtifile='+tmp_dir+'le_gti_new.fits outfile='+clean_dir+'le_screen_blind.fits userdetid="'+det+'"'+\
                 ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
                 ' clobber=yes history=yes'
         print lescreen_text
@@ -123,7 +134,7 @@ def main():
             # carry out hxbary
             ra = args.ra
             dec = args.dec
-            hxbary_text = 'hxbary' + ' ' + le_dir + 'le_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
             print hxbary_text
             os.system(hxbary_text)
 
@@ -131,7 +142,7 @@ def main():
         det =  args.detlist;
         print "detector list:",det
         ## select good event data
-        lescreen_text = 'lescreen evtfile='+le_dir+'le_recon.fits gtifile='+le_dir+'le_gti.fits outfile='+le_dir+'le_screen.fits userdetid="'+det+'"'+\
+        lescreen_text = 'lescreen evtfile='+tmp_dir+'le_recon.fits gtifile='+tmp_dir+'le_gti_new.fits outfile='+clean_dir+'le_screen.fits userdetid="'+det+'"'+\
                 ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
                 ' clobber=yes history=yes'
         print lescreen_text
@@ -142,7 +153,7 @@ def main():
             # carry out hxbary
             ra = args.ra
             dec = args.dec
-            hxbary_text = 'hxbary' + ' ' + le_dir + 'le_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
             print hxbary_text
             os.system(hxbary_text)
 
@@ -156,6 +167,8 @@ if args.inputlist:
             main()
         except:
             continue
+elif args.input == None:
+    print 'WARNING: no inputs. "python le_pipeline_v2.py -h" see help'
 else:
     data_dir = args.input
     product_dir = args.output
