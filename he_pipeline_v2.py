@@ -22,7 +22,8 @@ import glob
 
 # find and create data dir list
 
-parser = argparse.ArgumentParser(description='Example: python he_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --detlist "0-15,17" --blinddet --nai --hxbary -r 83.63322083 -d 22.014461')
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Example: python he_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --detlist "0-15,17" --blinddet --nai --hxbary -r 83.63322083 -d 22.014461')
 parser.add_argument("-i","--input",help="data archived path")
 parser.add_argument("-I","--inputlist",help="data archived path in list",type=str)
 parser.add_argument("-o","--output",help="products archived path")
@@ -30,7 +31,7 @@ parser.add_argument("-O","--outputlist",help="products archived path in list",ty
 parser.add_argument("--nai",action="store_true",help="flag for selecting only NaI Events")
 parser.add_argument("--detlist",action="store",help="detector list")
 parser.add_argument("--blinddet",action="store_true",help="select  blind detectors")
-parser.add_argument("--hxbary",action="store_true",help="carry out hxbary and copy Evt file to local directory")
+parser.add_argument("--hxbary",action="store_true",help="carry out Barycentric correction")
 parser.add_argument("-r","--ra",help="right ascension of barycentering correction",type=float)
 parser.add_argument("-d","--dec",help="declination of barycentering correction",type=float)
 args = parser.parse_args()
@@ -42,6 +43,7 @@ def main():
     he_dir = product_dir + "/HE/"   # HE  path
     clean_dir = product_dir + "/HE/cleaned/"  # HE cleaned data path
     tmp_dir = product_dir + "/HE/tmp/" # HE temporary data
+    spec_dir = product_dir +"/HE/spectra/" # spectra results path
     
     #make direction for data structure
     if not os.path.isdir(product_dir):os.system('mkdir -p '+product_dir)
@@ -50,6 +52,7 @@ def main():
     if not os.path.isdir(he_dir):os.system('mkdir -p '+he_dir)
     if not os.path.isdir(clean_dir):os.system('mkdir -p '+clean_dir)
     if not os.path.isdir(tmp_dir):os.system('mkdir -p '+tmp_dir)
+    if not os.path.isdir(spec_dir):os.system('mkdir -p '+spec_dir)
     
     #read filenames
     filename     = sorted(glob.glob(data_dir + '/HE/*HE-Evt_FFFFFF_V[1-9]*'))[-1]
@@ -105,6 +108,14 @@ def main():
             ' clobber=yes history=yes'
             print hescreen_text
             os.system(hescreen_text)
+            # spectra generating
+            spec_text = 'hespecgen evtfile="'+clean_dir+'he_screen_NaI.fits" outfile="'+\
+                    spec_dir+'he_spec_NaI" deadfile="'+deadfilename+'" userdetid="'+\
+                    '0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;17" eventtype=1 starttime=0 '+\
+                    'stoptime=0 minPI=0 maxPI=255' 
+            print spec_text
+            os.system(spec_text)
+
             # carry out barycentering correction
             if args.hxbary:
                 try:
@@ -123,8 +134,15 @@ def main():
             ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
             ' minpulsewidth=20 maxpulsewidth=70'+\
             ' clobber=yes history=yes'
-            os.system(hescreen_text)
             print hescreen_text
+            os.system(hescreen_text)
+            # spectra generating
+            spec_text = 'hespecgen evtfile="'+clean_dir+'he_screen.fits" outfile="'+\
+                    spec_dir+'he_spec" deadfile="'+deadfilename+'" userdetid="'+\
+                    '0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;17" eventtype=1 starttime=0 '+\
+                    'stoptime=0 minPI=0 maxPI=255' 
+            print spec_text
+            os.system(spec_text)
             # carry out barycentering correction
             if args.hxbary:
                 try:
@@ -149,6 +167,13 @@ def main():
             ' clobber=yes history=yes'
             print hescreen_text
             os.system(hescreen_text)
+            # spectra generating
+            spec_text = 'hespecgen evtfile="'+clean_dir+'he_screen_NaI_blind.fits" outfile="'+\
+                    spec_dir+'he_spec_NaI_blind" deadfile="'+deadfilename+'" userdetid="'+\
+                    '16" eventtype=1 starttime=0 '+\
+                    'stoptime=0 minPI=0 maxPI=255' 
+            print spec_text
+            os.system(spec_text)
             # carry out barycentering correction
             if args.hxbary:
                 try:
@@ -169,6 +194,13 @@ def main():
             ' clobber=yes history=yes'
             print hescreen_text
             os.system(hescreen_text)
+            # spectra generating
+            spec_text = 'hespecgen evtfile="'+clean_dir+'he_screen_NaI_blind.fits" outfile="'+\
+                    spec_dir+'he_spec_blind" deadfile="'+deadfilename+'" userdetid="'+\
+                    '16" eventtype=1 starttime=0 '+\
+                    'stoptime=0 minPI=0 maxPI=255' 
+            print spec_text
+            os.system(spec_text)
             # carry out barycentering correction
             if args.hxbary:
                 try:
@@ -190,7 +222,7 @@ if args.inputlist:
         product_dir = product_dir[0:-1]
         main()
 elif args.input == None:
-    print 'WARNING: no inputs. "python he_pipeline_v2.py -h" see help'
+    print 'WARNING: no inputs. "python he_pipeline.py -h" see help'
 else:
     data_dir = args.input
     product_dir = args.output

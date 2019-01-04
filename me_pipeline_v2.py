@@ -13,7 +13,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # find and create data dir list
-parser = argparse.ArgumentParser(description='Example: python me_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --smfovdet --blinddet --hxbary -r 83.63322083 -d 22.014461')
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Example: python me_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --smfovdet --blinddet --hxbary -r 83.63322083 -d 22.014461')
 parser.add_argument("-i","--input",help="data archived path")
 parser.add_argument("-I","--inputlist",help="data archived path in list",type=str)
 parser.add_argument("-o","--output",help="products archived path")
@@ -22,7 +23,7 @@ parser.add_argument("--detlist",action="store",help="detector list")
 parser.add_argument("--bigfovdet",action="store_true",help="select big fov detectors of three boxes")
 parser.add_argument("--smfovdet",action="store_true",help="select small fov detectors of three boxes")
 parser.add_argument("--blinddet",action="store_true",help="select all blind detectors")
-parser.add_argument("--hxbary",action="store_true",help="carry out hxbary and copy Evt file to local directory")
+parser.add_argument("--hxbary",action="store_true",help="carry out Barycentric correction")
 parser.add_argument("-r","--ra",help="right ascension of barycentering correction",type=float)
 parser.add_argument("-d","--dec",help="declination of barycentering correction",type=float)
 args = parser.parse_args()
@@ -34,6 +35,7 @@ def main():
     me_dir = product_dir + "/ME/"   # ME  path
     clean_dir = product_dir + "/ME/cleaned/"  # ME cleaned data path
     tmp_dir = product_dir + "/ME/tmp/" # ME temporary data
+    spec_dir = product_dir +"/ME/spectra/" # spectra results path
 
 
     #make directory for data structure
@@ -43,6 +45,7 @@ def main():
     if not os.path.isdir(me_dir):os.system('mkdir -p '+me_dir)
     if not os.path.isdir(clean_dir):os.system('mkdir -p '+clean_dir)
     if not os.path.isdir(tmp_dir):os.system('mkdir -p '+tmp_dir)
+    if not os.path.isdir(spec_dir):os.system('mkdir -p '+spec_dir)
     
     #read filenames
     print data_dir
@@ -91,6 +94,12 @@ def main():
         ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024 clobber=yes'
         print mescreen_text
         os.system(mescreen_text)
+        # spectra generating
+        spec_text = 'mespecgen evtfile="'+clean_dir+'me_screen_smfov.fits" outfile="'+\
+                spec_dir+'me_spec_smfov" deadfile="'+tmp_dir+'me_dtime.fits" userdetid="'+\
+                det+'" starttime=0 stoptime=0 minPI=0 maxPI=1023' 
+        print spec_text
+        os.system(spec_text)
         
         # carry out barycentering correction
         if args.hxbary:
@@ -109,6 +118,12 @@ def main():
         ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024 clobber=yes'
         print mescreen_text
         os.system(mescreen_text)
+        # spectra generating
+        spec_text = 'mespecgen evtfile="'+clean_dir+'me_screen_blind.fits" outfile="'+\
+                spec_dir+'me_spec_blind" deadfile="'+tmp_dir+'me_dtime.fits" userdetid="'+\
+                det+'" starttime=0 stoptime=0 minPI=0 maxPI=1023' 
+        print spec_text
+        os.system(spec_text)
         
         # carry out barycentering correction
         if args.hxbary:
@@ -127,6 +142,13 @@ def main():
         ' userdetid="'+det+'" starttime=0 stoptime=0 minPI=0 maxPI=1024 clobber=yes'
         print mescreen_text
         os.system(mescreen_text)
+        # spectra generating
+        spec_text = 'mespecgen evtfile="'+clean_dir+'me_screen.fits" outfile="'+\
+                spec_dir+'me_spec" deadfile="'+tmp_dir+'me_dtime.fits" userdetid="'+\
+                det+'" starttime=0 stoptime=0 minPI=0 maxPI=1023' 
+        print spec_text
+        os.system(spec_text)
+        
         
         # carry out barycentering correction
         if args.hxbary:
@@ -146,7 +168,7 @@ if args.inputlist:
         product_dir = product_dir[0:-1]
         main()
 elif args.input == None:
-    print 'WARNING: no inputs. "python me_pipeline_v2.py -h" see help'
+    print 'WARNING: no inputs. "python me_pipeline.py -h" see help'
 else:
     data_dir = args.input
     product_dir = args.output

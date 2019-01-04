@@ -13,7 +13,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # find and create data dir list
-parser = argparse.ArgumentParser(description='Example: python le_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --smfovdet --blinddet --hxbary -r 83.63322083 -d 22.014461')
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Example: python le_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --smfovdet --blinddet --hxbary -r 83.63322083 -d 22.014461')
 parser.add_argument("-i","--input",help="data archived path")
 parser.add_argument("-I","--inputlist",help="data archived path in list",type=str)
 parser.add_argument("-o","--output",help="products archived path")
@@ -24,7 +25,7 @@ parser.add_argument("--bigfovdet",action="store_true",help="select big fov detec
 parser.add_argument("--midfovdet",action="store_true",help="select mid fov detectors of three boxes")
 parser.add_argument("--smfovdet",action="store_true",help="select small fov detectors of three boxes")
 parser.add_argument("--blinddet",action="store_true",help="select all blind detectors")
-parser.add_argument("--hxbary",action="store_true",help="carry out hxbary and copy Evt file to local directory")
+parser.add_argument("--hxbary",action="store_true",help="carry out Barycentric correction")
 parser.add_argument("-r","--ra",help="right ascension of barycentering correction",type=float)
 parser.add_argument("-d","--dec",help="declination of barycentering correction",type=float)
 args = parser.parse_args()
@@ -35,6 +36,7 @@ def main():
     le_dir = product_dir + "/LE/"   # LE  path
     clean_dir = product_dir + "/LE/cleaned/"  # LE cleaned data path
     tmp_dir = product_dir + "/LE/tmp/" # LE temporary data
+    spec_dir = product_dir +"/LE/spectra/" # spectra results path
     
     
     #make direction for data structure
@@ -44,6 +46,7 @@ def main():
     if not os.path.isdir(le_dir):os.system('mkdir -p '+le_dir)
     if not os.path.isdir(clean_dir):os.system('mkdir -p '+clean_dir)
     if not os.path.isdir(tmp_dir):os.system('mkdir -p '+tmp_dir)
+    if not os.path.isdir(spec_dir):os.system('mkdir -p '+spec_dir)
     
     #read filenames
     filename = sorted(glob.glob(data_dir + '/LE/*LE-Evt_FFFFFF_V[1-9]*'))[-1]
@@ -60,12 +63,12 @@ def main():
     lepical_text = 'lepical evtfile='+filename+' tempfile='+tempfilename+' outfile='+tmp_dir+'le_pi.fits'+\
             ' clobber=yes history=yes'
     print lepical_text
-    os.system(lepical_text)
+    #os.system(lepical_text)
     
     ## le reconstruction
     lerecon_text = 'lerecon evtfile='+tmp_dir+'le_pi.fits outfile='+tmp_dir+'le_recon.fits instatusfile='+instatusfilename+' clobber=yes history=yes'
     print lerecon_text
-    os.system(lerecon_text)
+    #os.system(lerecon_text)
     
     ## gti selection
     legtigen_text = 'legtigen evtfile='+filename+' instatusfile='+instatusfilename+' tempfile='+tempfilename+' ehkfile='+ehkfilename+\
@@ -73,12 +76,13 @@ def main():
             ' expr="ELV>10&&DYE_ELV>40&&COR>8&&T_SAA>=300&&TN_SAA>=300&&ANG_DIST<=0.04"'+\
             ' clobber=yes history=yes'
     print legtigen_text
-    os.system(legtigen_text) 
+    #os.system(legtigen_text) 
     ## new git selection
     lenewgti_text = 'legti '+tmp_dir+'le_recon.fits '+tmp_dir+'le_gti.fits '+tmp_dir+'le_gti_new.fits'
     print(lenewgti_text)
     try:
-        os.system(lenewgti_text)
+        #os.system(lenewgti_text)
+        pass
     except:
         print "ERROR: couldn't find legti program"
     
@@ -89,8 +93,8 @@ def main():
     if args.midfovdet:
         print 'function not available'
     if args.smfovdet:
-        det = det + '0,2-4,6-10,12,14,20,22-26,28-30;'+\
-                '32,34-36,38-42,44,46,52,54-58,60-62;'+\
+        det = det + '0,2-4,6-10,12,14,20,22-26,28-30,'+\
+                '32,34-36,38-42,44,46,52,54-58,60-62,'+\
                 '64,66-68,70-74,76,78,84,86-90,92-94;'
     if args.blinddet:
         det = det + '13,45,77'
@@ -99,8 +103,8 @@ def main():
     print 'detector_list:',det
     
     if args.smfovdet:
-        det =   '0,2-4,6-10,12,14,20,22-26,28-30;'+\
-                '32,34-36,38-42,44,46,52,54-58,60-62;'+\
+        det =   '0,2-4,6-10,12,14,20,22-26,28-30,'+\
+                '32,34-36,38-42,44,46,52,54-58,60-62,'+\
                 '64,66-68,70-74,76,78,84,86-90,92-94;'
         print "small FoV detector list:",det
         ## select good event data
@@ -108,7 +112,13 @@ def main():
                 ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
                 ' clobber=yes history=yes'
         print lescreen_text
-        os.system(lescreen_text)
+        #os.system(lescreen_text)
+        # spectra generating
+        spec_text = 'lespecgen evtfile="'+clean_dir+'le_screen_smfov.fits" outfile="'+\
+                spec_dir+'le_spec_smfov" eventtype=1 userdetid="'+\
+                det+'" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
+        print spec_text
+        os.system(spec_text)
         
         ## carry out barycentering correction
         if args.hxbary:
@@ -117,7 +127,7 @@ def main():
             dec = args.dec
             hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen_smfov.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
             print hxbary_text
-            os.system(hxbary_text)
+            #os.system(hxbary_text)
 
     if args.blinddet:
         det =  '13,45,77'
@@ -127,7 +137,13 @@ def main():
                 ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
                 ' clobber=yes history=yes'
         print lescreen_text
-        os.system(lescreen_text)
+        #os.system(lescreen_text)
+        # spectra generating
+        spec_text = 'lespecgen evtfile="'+clean_dir+'le_screen_blind.fits" outfile="'+\
+                spec_dir+'le_spec_blind" eventtype=1 userdetid="'+\
+                det+'" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
+        print spec_text
+        os.system(spec_text)
         
         ## carry out barycentering correction
         if args.hxbary:
@@ -136,7 +152,7 @@ def main():
             dec = args.dec
             hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
             print hxbary_text
-            os.system(hxbary_text)
+            #os.system(hxbary_text)
 
     if args.detlist:
         det =  args.detlist;
@@ -146,7 +162,13 @@ def main():
                 ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
                 ' clobber=yes history=yes'
         print lescreen_text
-        os.system(lescreen_text)
+        #os.system(lescreen_text)
+        # spectra generating
+        spec_text = 'lespecgen evtfile="'+clean_dir+'le_screen.fits" outfile="'+\
+                spec_dir+'le_spec" eventtype=1 userdetid="'+\
+                det+'" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
+        print spec_text
+        os.system(spec_text)
         
         ## carry out barycentering correction
         if args.hxbary:
@@ -155,7 +177,7 @@ def main():
             dec = args.dec
             hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
             print hxbary_text
-            os.system(hxbary_text)
+            #os.system(hxbary_text)
 
 if args.inputlist:
     inputfile = open(args.inputlist)
@@ -168,7 +190,7 @@ if args.inputlist:
         except:
             continue
 elif args.input == None:
-    print 'WARNING: no inputs. "python le_pipeline_v2.py -h" see help'
+    print 'WARNING: no inputs. "python le_pipeline.py -h" see help'
 else:
     data_dir = args.input
     product_dir = args.output
