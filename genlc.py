@@ -30,6 +30,7 @@ def readfile(instru='HE'):
     return screenfile, blindfile, ehkfile, gtifile, tempfile, deadfile
 
 def helcgen(evtfile, outpath, deadfile, binsize=1, minPI=20, maxPI=200):
+    print evtfile, deadfile
     lc_text = 'helcgen evtfile=%s outfile=%s deadfile=%s userdetid=%s eventtype=1 binsize=%s minPI=%s maxPI=%s clobber=yes'\
             %(evtfile[0], outpath+'he_lc', deadfile[0], '"0-15,17"',\
             str(binsize),str(minPI), str(maxPI))
@@ -100,19 +101,21 @@ if __name__ == '__main__':
     outpath = os.path.join(product_path,'HE','lightcurve/')
     mk_lcdir(outpath)
     screenfile, blindfile, ehkfile, gtifile, _, deadfile = readfile(instru='HE')
-    helcgen(screenfile, outpath, deadfile)
+    helcgen(screenfile, outpath, deadfile, minPI=20, maxPI=200)
     listfile = genlist(outpath, instru='HE')
     hebkgmap(blindfile, ehkfile, gtifile, deadfile, listfile, outpath, minPI=20, maxPI=200)
 
     outpath = os.path.join(product_path,'ME','lightcurve/')
     mk_lcdir(outpath)
     screenfile, blindfile, ehkfile, gtifile, tempfile, deadfile = readfile(instru='ME')
+    listfile = genlist(outpath, instru='ME')
     melcgen(screenfile, outpath, deadfile)
     mebkgmap(blindfile, ehkfile, gtifile, deadfile, tempfile, listfile, outpath, minPI=0, maxPI=1024)
 
     outpath = os.path.join(product_path,'LE','lightcurve/')
     mk_lcdir(outpath)
     screenfile, blindfile, ehkfile, gtifile, tempfile, deadfile = readfile(instru='LE')
+    listfile = genlist(outpath, instru='LE')
     lelcgen(screenfile, outpath)
     lebkgmap(blindfile, gtifile, listfile, outpath, minPI=0, maxPI=1535)
 

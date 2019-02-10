@@ -218,7 +218,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
 
     return p_num_x_2,p_num_2,f,chi_square
 
-def psearch(data,p0,prange,pstep,pannel=True,prefix='',bin_cs=1000,t0=0):
+def psearch(data,p0,prange,pstep,fig=False,pannel=True,prefix='',bin_cs=1000,t0=0):
     #import data
     if t0 == 0:
         t0 =min(data)
@@ -239,18 +239,19 @@ def psearch(data,p0,prange,pstep,pannel=True,prefix='',bin_cs=1000,t0=0):
         sys.stdout.flush()
     pbest = p[np.where(chi_square==max(chi_square))[0]]
 #    print 'fbest = ',fbest
-    plt.figure()
-    plt.plot(p,chi_square)
-    plt.xlabel('Period (second)')
-    plt.ylabel('Chi-square')
-    plt.title(prefix)
-    if pannel:
-        # annotation text
-        text = 'best Period = '+str(pbest[0])+'(s)\n Resolution = '+str(pstep)+'(s)'
-        plt.annotate(text, xy=(1, 1), xytext=(-15, -15), fontsize=10,
-        xycoords='axes fraction', textcoords='offset points',
-        bbox=dict(facecolor='white', alpha=0.8),
-        horizontalalignment='right', verticalalignment='top')
+    if fig:
+        plt.figure()
+        plt.plot(p,chi_square)
+        plt.xlabel('Period (second)')
+        plt.ylabel('Chi-square')
+        plt.title(prefix)
+        if pannel:
+            # annotation text
+            text = 'best Period = '+str(pbest[0])+'(s)\n Resolution = '+str(pstep)+'(s)'
+            plt.annotate(text, xy=(1, 1), xytext=(-15, -15), fontsize=10,
+            xycoords='axes fraction', textcoords='offset points',
+            bbox=dict(facecolor='white', alpha=0.8),
+            horizontalalignment='right', verticalalignment='top')
     return pbest
 
 def pfold(data,f0,f1=0,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0):
