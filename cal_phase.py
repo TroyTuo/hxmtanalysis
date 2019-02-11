@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 from astropy.io import fits
+from astropy.table import Column
+from astropy.table import Table
 from fitsio import FITS
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -124,19 +126,51 @@ def phi_cal(time, parfile, instrument='hxmt'):
     print phi
     return phi
 
+def cp_table(old_table):
+    col_names = old_table.names
+    col_type = old_table.formats
+    cp_col = []
+    for i in xrange(len(col_names)):
+        cp_col.append( fits.Column(name=col_names[i], array=old_table.field(col_names[i]), format=col_type[i]) )
+    new_table = fits.BinTableHDU.from_columns(cp_col)
+    return new_table
+
 def write_file(datafile, phi):
-    try:
-        hdulist = FITS(datafile,'rw')
-        hdulist[1].insert_column(name='Phase', data=phi)
-        hdulist.close()
-    except:
-        hdulist = fits.open(datafile)
-        table = hdulist[1].data
-        table['Phase'][:] = phi
-        hdulist.writeto(datafile, overwrite=True)
-    print "...adding a column to event file..."
-    print "Success"
-    return
+    #read old
+    hdulist_old = fits.open(datafile)
+    prim_hdr_old = hdulist_old[0].header
+    prim_hdr_new = fits.PrimaryHDU(header=prim_hdr_old)
+    hdr_all = []
+    for i in xrange(len(hdulist_old)):
+        hdr_all.append(hdulist_old[i].header)
+    #modify main table
+    table1 = hdulist_old[1].data
+    col_names = table1.names
+    col_type = table1.formats
+    cp_col = []
+    if 'Phase' not in col_names:
+        new_col = fits.Column(name='Phase', array=phi, format='1D')
+        for i in xrange(len(col_names)):
+            cp_col.append( fits.Column(name=col_names[i], array=table1.field(col_names[i]), format=col_type[i]) )
+        cp_col.append(new_col)
+        new_table1 = fits.BinTableHDU.from_columns(cp_col)
+        if len(hdulist_old) <=2:
+            hdulist_new = fits.HDUList([prim_hdr_new, new_table1])
+        else:
+            table_rest = []
+            for i in np.arange(2, len(hdulist_old), 1):
+                table_rest.append(cp_table(hdulist_old[i].data))
+            hdulist_new = fits.HDUList([prim_hdr_new, new_table1]+table_rest)
+        hdulist_new.writeto(datafile, overwrite=True)
+        #update header and info
+        update_hdulist = fits.open(datafile, mode='update')
+        for i in xrange(len(update_hdulist)):
+            update_hdulist[i].header = hdulist_old[i].header
+        update_hdulist.close()
+    else:
+        table1['Phase'][:] = phi
+        hdulist_old.writeto(datafile, overwrite=True)
+        hdulist_old.close()
 
 def pass_argument():
     evtfile = []
