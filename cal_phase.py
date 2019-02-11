@@ -121,6 +121,7 @@ def phi_cal(time, parfile, instrument='hxmt'):
             (1/np.math.factorial(9))*((data-t0)**9)*f8 + (1/np.math.factorial(10))*((data-t0)**10)*f9 ,1.0)
     #print phi
     print "...processing..."
+    print phi
     return phi
 
 def write_file(datafile, phi):
@@ -137,26 +138,54 @@ def write_file(datafile, phi):
     print "Success"
     return
 
-def main():
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-            description='Example: python cal_phase.py -f eventfile.FITS -p ephemeris.par')
-    parser.add_argument("-f","--evtfile",help="The Event file containing the column of the Barycenter corrected time")
-    parser.add_argument("-p","--parfile",help="The ephemeris file")
-    parser.add_argument("--colname", help='The column name of Barycenter corrected time(the default value is "TDB"')
-    parser.add_argument("--instrument", help='The name of Instrument(HXMT/FERMI) (the default value is "HXMT"')
-    args = parser.parse_args()
-
-    evtfile = args.evtfile
-    parfile = args.parfile
-    if args.colname:
-        colname = args.colname
+def pass_argument():
+    evtfile = []
+    parfile = []
+    colname = ['TDB']
+    instrument = ['HXMT']
+    len_arg = len(sys.argv)
+    if len_arg <=1:
+        raise IOError("Error input argument, RUN 'python cal_phase.py -h' for help")
+    if sys.argv[1] == '-h' or sys.argv[1] == '--help':
+        print "#############"
+        print ''
+        print "EXAMPLE: python cal_phase.py evtfile=eventfile.FITS parfile=ephemeris.par"
+        print ""
+        print "    evtfile: The Event file containing the column of the Barycenter corrected time"
+        print "    parfile: The name of ephemeris file"
+        print '    colname(default argument): The column name of Barycenter corrected time(the default value is "TDB"'
+        print '    instrument(default argument): The name of Instrument(HXMT/FERMI) (the default value is "HXMT"'
+        print ''
+        print "############"
+        return False, False, False, False
+    for i in xrange(len_arg):
+        arg = sys.argv[i]
+        if i == 0:continue
+        if sys.argv[1] == '-h' or sys.argv[1] == '--help':
+            pass
+        else:
+            arg_split = arg.split('=')
+            argname = arg_split[0]
+            argval  = arg_split[1]
+            if argname not in ['evtfile', 'parfile', 'colname', 'instrument']:
+                raise IOError("No such argument %s, RUN 'python cal_phase.py -h' for help"% argval)
+            if argname == 'evtfile': 
+                evtfile.append(argval)
+            elif argname == 'parfile': 
+                parfile.append(argval)
+            elif argname == 'colname':
+                colname[0] = argval
+            elif argname == 'instrument':
+                instrument[0] = argval
+    if not evtfile or not parfile:
+        raise IOError("Error input argument, RUN 'python cal_phase.py -h' for help")
+        return False, False, False, False
     else:
-        colname = 'TDB'
-    if args.instrument:
-        instrument = args.instrument
-    else:
-        instrument = 'HXMT'
+        return evtfile[0], parfile[0], colname[0], instrument[0]
 
+        
+
+def main(evtfile, parfile, colname='TDB', instrument='HXMT'):
     time = read_data(evtfile,colname=colname)
     phi = phi_cal(time, parfile, instrument=instrument)
     write_file(evtfile, phi)
@@ -167,4 +196,7 @@ if __name__ == "__main__":
     if len(sys.argv) <=1:
         print "RUN 'python cal_phase.py --help' for help"
     else:
-        main()
+        evtfile, parfile, colname, instrument = pass_argument()
+        #print evtfile, parfile, colname, instrument
+        if evtfile and parfile:
+            main(evtfile, parfile, colname=colname, instrument=instrument)
