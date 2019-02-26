@@ -13,7 +13,7 @@ import os
 def read_par(parname):
     pardata = open(parname,'r')
     stdpar = []
-    parameters = np.zeros(11,dtype='longdouble')
+    parameters = np.zeros(11)#XXX:is this dtype neccessary? dtype='longdouble')
     for par in pardata:
         par = par[0:(len(par)-1)]
         stdpar.append(par)
@@ -343,6 +343,7 @@ def toa_cal(time,parfile,duration,fstep=0,frange=0,f0_flag=True,f1_flag=True,f2_
             data = time[ (time>=edge0) & (time<=edge1) ]
             if len(data)==0:continue
             t0 = min(data)
+#            t0 = pepoch
             T0 = t0/86400.0 + MJDREFF + MJDREFI
             dt = t0 - pepoch 
             f0 = F0 + F1*dt + (1/np.math.factorial(2))*F2*(dt**2) + (1/np.math.factorial(3))*F3*(dt**3) + (1/np.math.factorial(4))*F4*(dt**4) + (1/np.math.factorial(5)*F5*(dt**5)) + (1/np.math.factorial(6)*F6*(dt**6)) + (1/np.math.factorial(7)*F7*(dt**7)) + (1/np.math.factorial(8)*F8*(dt**8)) + (1/np.math.factorial(9)*F9*(dt**9)) 
@@ -362,7 +363,7 @@ def toa_cal(time,parfile,duration,fstep=0,frange=0,f0_flag=True,f1_flag=True,f2_
             b = N/bin_cs
             #for f1 in np.arange(-3.72e-10,-3.69e-10,0.5e-12):
             for j in tqdm(range(0,len(f))):
-#                phi_tmp = np.mod((data-t0)*f[j] + (1.0/2)*((data-t0)**2)*f1 + (1.0/6.0)*((data-t0)**3)*f2 + (1.0/24)*(data-t0)**f3,1.0)
+#                phi_tmp = np.mod((data-t0)*f[j] ,1.0)
                 phi_tmp = np.mod((data-t0)*f[j] + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4 +
                         (1/np.math.factorial(6))*((data-t0)**6)*f5 + (1/np.math.factorial(7))*((data-t0)**7)*f6 + (1/np.math.factorial(8))*((data-t0)**8)*f7 + 
                         (1/np.math.factorial(9))*((data-t0)**9)*f8 + (1/np.math.factorial(10))*((data-t0)**10)*f9 ,1.0)
@@ -404,6 +405,8 @@ def toa_cal(time,parfile,duration,fstep=0,frange=0,f0_flag=True,f1_flag=True,f2_
                 plt.step(p_num_x,p_num)
                 if std_pro_file != '':
                     plt.plot(p_num_x,p_num_std,color='red')
+                for x in p_num:
+                    print x
 
 
     return toa
@@ -425,6 +428,7 @@ def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag
     #read parfile and parameters
     parameters = read_par(parfile)
     PEPOCH = parameters[0]
+    print PEPOCH
     pepoch = (PEPOCH - MJDREFF - MJDREFI)*86400
     print 'pepoch=',pepoch
     if f0_flag:

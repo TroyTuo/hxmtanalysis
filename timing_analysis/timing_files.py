@@ -104,22 +104,10 @@ def read_par(parname):
 
 #read ToA file
 def read_toa(timname):
-    #with some bizarre lines
-    file = open(timname)
-    lines = file.readlines()
-    file.close()
-    toa = np.array([])
-    for line in lines[1:]:
-        line = line.split(' ')
-        line = [x for x in line if x!='']
-        if line[0] == 'C' :continue
-        toa = np.append(toa, line[2])
-    toa = np.asarray(toa, dtype=np.float128)
-
-    #data = np.loadtxt(timname, skiprows=1, dtype={
-    #    'names':('instru','what1','toa','err','what2'),
-    #    'formats':('S','g','float128','float128','S')})
-    #toa = np.asarray([x[2] for x in data])
+    data = np.loadtxt(timname, skiprows=1, dtype={
+        'names':('instru','what1','toa','err','what2'),
+        'formats':('S','g','float128','float128','S')})
+    toa = np.asarray([x[2] for x in data])
     return toa
 
 
@@ -168,12 +156,16 @@ def profile_cal(time, parfile, timfile, bin_profile=50, instrument='hxmt'):
     toas = read_toa(timfile)
     phi0, phi_toa = mean_phi(toas, 57900, T0, F0=f0, F1=f1, F2=f2) 
 
-    #phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 - phi0,1.0)
-    phi = np.mod(np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 - phi0,1.0)+0.5, 1) -0.5
+    phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 - phi0,1.0)
+    #phi = np.mod(np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2,1.0)+0.5, 1) -0.5
 
     profile = np.histogram(phi,bin_profile)[0]
 
-    return phi, profile, phi0
+    print min(time)/86400 + MJDREFF + MJDREFI, max(time)/86400 +MJDREFF + MJDREFI, PEPOCH, f0, f1, f2, phi0
+    start_MJD = min(time)/86400 + MJDREFF + MJDREFI
+    stop_MJD =  max(time)/86400 +MJDREFF + MJDREFI
+
+    return phi, profile, phi0, start_MJD, stop_MJD, PEPOCH, f0, f1, f2
 
 def pass_argument():
     pass
@@ -186,60 +178,52 @@ def mean_phi(toas, epoch_new, epoch_old, F0, F1,F2=0,F3=0,F4=0,F5=0,F6=0,F7=0,F8
     f0 = F0 + F1*dt + (1/2)*F2*(dt**2)
     f1 = F1 + F2*dt 
     f2 = F2
+    #TODO:f4, f5, ... 
 
     dt_toa = (toas-epoch_new) * 86400
     phi = np.mod((dt_toa)*f0 + (1/2)*((dt_toa)**2)*f1 + (1/6)*((dt_toa)**3)*f2,1.0)
-    #phi = np.mod(np.mod((dt_toa)*f0 + (1/2)*((dt_toa)**2)*f1 + (1/6)*((dt_toa)**3)*f2,1.0)+0.5, 1) -0.5
+    phi = np.mod(np.mod((dt_toa)*f0 + (1/2)*((dt_toa)**2)*f1 + (1/6)*((dt_toa)**3)*f2,1.0)+0.5, 1)  -0.5
     mean_phi = np.mean(phi)
-
-    ##NOTE:We calculate the mean value of Phase without those points deviating the mean value!NOTE
-    #phi_tmp = np.asarray([x for x in phi if np.abs(x-mean_phi)<0.1])
-    #phi = phi_tmp
-    ####
-
-    mean_phi = np.mean(phi)
-    plt.figure()
-    plt.plot(phi,'.')
-
+    #plt.figure()
+    #plt.plot(phi,'.')
     return mean_phi, phi
 
 if __name__ == '__main__':
-    datafile = '../geminga_filtered_gti_bary.fits'
-    parfile_list = natsorted(glob.glob('../results/geminga_eph_*.par'), key=lambda y:y.lower())
-    timfile_list = natsorted(glob.glob('../results/geminga_toa_*.tim'), key=lambda y:y.lower())
-    profile_all = []
+
+    datafile = '../vela_bary.fits'
+    outephfile = '../results/ephemeris.txt'
+    parfile_list = natsorted(glob.glob('../results/Vela_eph_*.par'), key=lambda y:y.lower())
+    timfile_list = natsorted(glob.glob('../results/Vela_toa_*.tim'), key=lambda y:y.lower())
     phi_all = np.array([])
     time_all = np.array([])
+    start_MJD = np.array([])
+    stop_MJD = np.array([])
+    PEPOCH_all = np.array([])
+    f0_all = np.array([])
+    f1_all = np.array([])
+    f2_all = np.array([])
+    phi0_all = np.array([])
     for parfile, timfile in zip(parfile_list, timfile_list)[:]:
-        print parfile, timfile
         time = read_file(datafile, colname='Time', parfile=parfile, tstart=0, tstop=0, instrument='fermi')
-        phi, profile, phi0 = profile_cal(time, parfile, timfile, bin_profile=100, instrument='fermi')
-        print phi0, phi
+        phi, profile, phi0, start_T, stop_T, PEPOCH_i, f0_i, f1_i, f2_i = profile_cal(time, parfile, timfile, bin_profile=100, instrument='fermi')
         phi_all = np.append(phi_all, phi)
         time_all = np.append(time_all, time)
-        shift_index = int(phi0*len(profile))
-        profile_all.append(np.roll(profile, -shift_index))
-print time_all, phi_all
-H, x, y = np.histogram2d(time_all, phi_all, bins=(100, 100))
-print x
-plt.figure('3d')
-plt.imshow(H,aspect='auto',origin='lower')
-plt.figure()
-for h in H:
-    plt.plot(np.append(h, h))
+        PEPOCH_all = np.append(PEPOCH_all, PEPOCH_i)
+        start_MJD = np.append(start_MJD, start_T)
+        stop_MJD = np.append(stop_MJD, stop_T)
+        f0_all = np.append(f0_all, f0_i)
+        f1_all = np.append(f1_all, f1_i)
+        f2_all = np.append(f2_all, f2_i)
+        phi0_all = np.append(phi0_all, phi0)
+#H, x, y = np.histogram2d(time_all, phi_all, bins=(300, 100))
+#plt.figure('3d')
+#plt.imshow(H,aspect='auto',origin='lower', extent=[0,1,min(time_all)/86400+51910+0.00074287037037037, max(time_all)/86400+0.00074287037037037+51910])
+#plt.figure()
+#for h in H:
+#    plt.plot(np.append(h, h))
+#plt.show()
 
-plt.show()
-
-#    plt.figure()
-#    plt.imshow(profile_all,aspect='auto',origin='lower')
-#    plt.show()
-
-
-
-
-
-
-
-
-
-
+with open(outephfile, 'w')as fout:
+    for i in xrange(len(start_MJD)):
+        str = '%g %.15e %.15e %.15e %.15e %.15e %.15e %.15e\n'%(i, start_MJD[i], stop_MJD[i], PEPOCH_all[i], f0_all[i], f1_all[i], f2_all[i], phi0_all[i])
+        fout.write(str)
