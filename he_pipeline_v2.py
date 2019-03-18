@@ -90,7 +90,7 @@ def main():
     hegtigen_text = 'hegtigen hvfile='+hvfilename+\
     ' tempfile='+tempfilename+' pmfile='+pmfilename+\
     ' outfile='+tmp_dir+'he_gti.fits ehkfile='+ehkfilename+\
-    ' defaultexpr=NONE expr="ELV>6&&COR>8&&TN_SAA>300&&T_SAA>300&&ANG_DIST<=0.04"'+\
+    ' defaultexpr=NONE expr="ELV>10&&COR>8&&TN_SAA>300&&T_SAA>300&&ANG_DIST<=0.04"'+\
     ' pmexpr="" clobber=yes history=yes'
     print hegtigen_text
     os.system(hegtigen_text) 
