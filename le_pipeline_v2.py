@@ -6,11 +6,9 @@
 
 import argparse
 import os
-import commands
 import glob
-from astropy.io import fits as pf
 import numpy as np
-import matplotlib.pyplot as plt
+import commands
 
 # find and create data dir list
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -19,12 +17,12 @@ parser.add_argument("-i","--input",help="data archived path")
 parser.add_argument("-I","--inputlist",help="data archived path in list",type=str)
 parser.add_argument("-o","--output",help="products archived path")
 parser.add_argument("-O","--outputlist",help="products archived path in list",type=str)
-parser.add_argument("--rangefile",action="store_true",help="rangefile path of hegtigen is $hxmtanalysis")
-parser.add_argument("--detlist",action="store",help="detector list")
-parser.add_argument("--bigfovdet",action="store_true",help="select big fov detectors of three boxes")
-parser.add_argument("--midfovdet",action="store_true",help="select mid fov detectors of three boxes")
-parser.add_argument("--smfovdet",action="store_true",help="select small fov detectors of three boxes")
-parser.add_argument("--blinddet",action="store_true",help="select all blind detectors")
+#parser.add_argument("--rangefile",action="store_true",help="rangefile path of hegtigen is $hxmtanalysis")
+#parser.add_argument("--detlist",action="store",help="detector list")
+#parser.add_argument("--bigfovdet",action="store_true",help="select big fov detectors of three boxes")
+#parser.add_argument("--midfovdet",action="store_true",help="select mid fov detectors of three boxes")
+#parser.add_argument("--smfovdet",action="store_true",help="select small fov detectors of three boxes")
+#parser.add_argument("--blinddet",action="store_true",help="select all blind detectors")
 parser.add_argument("--hxbary",action="store_true",help="carry out Barycentric correction")
 parser.add_argument("-r","--ra",help="right ascension of barycentering correction",type=float)
 parser.add_argument("-d","--dec",help="declination of barycentering correction",type=float)
@@ -37,6 +35,7 @@ def main():
     clean_dir = product_dir + "/LE/cleaned/"  # LE cleaned data path
     tmp_dir = product_dir + "/LE/tmp/" # LE temporary data
     spec_dir = product_dir +"/LE/spectra/" # spectra results path
+    lc_dir = product_dir +"/LE/lightcurve/" #light curve results path
     
     
     #make direction for data structure
@@ -47,6 +46,7 @@ def main():
     if not os.path.isdir(clean_dir):os.system('mkdir -p '+clean_dir)
     if not os.path.isdir(tmp_dir):os.system('mkdir -p '+tmp_dir)
     if not os.path.isdir(spec_dir):os.system('mkdir -p '+spec_dir)
+    if not os.path.isdir(lc_dir):os.system('mkdir -p '+lc_dir)
     
     #read filenames
     filename = sorted(glob.glob(data_dir + '/LE/*LE-Evt_FFFFFF_V[1-9]*'))[-1]
@@ -78,7 +78,7 @@ def main():
     print legtigen_text
     os.system(legtigen_text) 
     ## new git selection
-    lenewgti_text = 'legti '+tmp_dir+'le_recon.fits '+tmp_dir+'le_gti.fits '+tmp_dir+'le_gti_new.fits'
+    lenewgti_text = 'legti '+tmp_dir+'le_recon.fits '+tmp_dir+'le_gti.fits '+tmp_dir+'le_gti.fits'
     print(lenewgti_text)
     try:
         os.system(lenewgti_text)
@@ -87,97 +87,88 @@ def main():
         print "ERROR: couldn't find legti program"
     
     ## detector selection
-    det = ''
-    if args.bigfovdet:
-        print 'function not available'
-    if args.midfovdet:
-        print 'function not available'
-    if args.smfovdet:
-        det = det + '0,2-4,6-10,12,14,20,22-26,28-30,'+\
-                '32,34-36,38-42,44,46,52,54-58,60-62,'+\
-                '64,66-68,70-74,76,78,84,86-90,92-94;'
-    if args.blinddet:
-        det = det + '13,45,77'
-    if args.detlist:
-        det = det + args.detlist;
-    print 'detector_list:',det
+    det =   '0,2-4,6-10,12,14,20,22-26,28-30,'+\
+            '32,34-36,38-42,44,46,52,54-58,60-62,'+\
+            '64,66-68,70-74,76,78,84,86-90,92-94;'
+    print "small FoV detector list:",det
+    ## select good event data
+    lescreen_text = 'lescreen evtfile='+tmp_dir+'le_recon.fits gtifile='+tmp_dir+'le_gti.fits outfile='+clean_dir+'le_screen_smfov.fits userdetid="'+det+'"'+\
+            ' eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1535'+\
+            ' clobber=yes history=yes'
+    print lescreen_text
+    os.system(lescreen_text)
+    # spectra generating
+    spec_text = 'lespecgen evtfile="'+clean_dir+'le_screen_smfov.fits" outfile="'+\
+            spec_dir+'le_spec_smfov" eventtype=1 userdetid="'+\
+            det+'" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
+    print spec_text
+    os.system(spec_text)
     
-    if args.smfovdet:
-        det =   '0,2-4,6-10,12,14,20,22-26,28-30,'+\
-                '32,34-36,38-42,44,46,52,54-58,60-62,'+\
-                '64,66-68,70-74,76,78,84,86-90,92-94;'
-        print "small FoV detector list:",det
-        ## select good event data
-        lescreen_text = 'lescreen evtfile='+tmp_dir+'le_recon.fits gtifile='+tmp_dir+'le_gti_new.fits outfile='+clean_dir+'le_screen_smfov.fits userdetid="'+det+'"'+\
-                ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
-                ' clobber=yes history=yes'
-        print lescreen_text
-        os.system(lescreen_text)
-        # spectra generating
-        spec_text = 'lespecgen evtfile="'+clean_dir+'le_screen_smfov.fits" outfile="'+\
-                spec_dir+'le_spec_smfov" eventtype=1 userdetid="'+\
-                det+'" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
-        print spec_text
-        os.system(spec_text)
-        
-        ## carry out barycentering correction
-        if args.hxbary:
-            # carry out hxbary
-            ra = args.ra
-            dec = args.dec
-            hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen_smfov.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-            print hxbary_text
-            os.system(hxbary_text)
+    ## carry out barycentering correction
+    if args.hxbary:
+        # carry out hxbary
+        ra = args.ra
+        dec = args.dec
+        hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen_smfov.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+        print hxbary_text
+        os.system(hxbary_text)
 
-    if args.blinddet:
-        det =  '13,45,77'
-        print "blind detector list:",det
-        ## select good event data
-        lescreen_text = 'lescreen evtfile='+tmp_dir+'le_recon.fits gtifile='+tmp_dir+'le_gti_new.fits outfile='+clean_dir+'le_screen_blind.fits userdetid="'+det+'"'+\
-                ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
-                ' clobber=yes history=yes'
-        print lescreen_text
-        os.system(lescreen_text)
-        # spectra generating
-        spec_text = 'lespecgen evtfile="'+clean_dir+'le_screen_blind.fits" outfile="'+\
-                spec_dir+'le_spec_blind" eventtype=1 userdetid="'+\
-                det+'" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
-        print spec_text
-        os.system(spec_text)
-        
-        ## carry out barycentering correction
-        if args.hxbary:
-            # carry out hxbary
-            ra = args.ra
-            dec = args.dec
-            hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-            print hxbary_text
-            os.system(hxbary_text)
+    det =  '13,45,77'
+    print "blind detector list:",det
+    ## select good event data
+    lescreen_text = 'lescreen evtfile='+tmp_dir+'le_recon.fits gtifile='+tmp_dir+'le_gti.fits outfile='+clean_dir+'le_screen_blind.fits userdetid="'+det+'"'+\
+            ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1535'+\
+            ' clobber=yes history=yes'
+    print lescreen_text
+    os.system(lescreen_text)
+    # spectra generating
+    spec_text = 'lespecgen evtfile="'+clean_dir+'le_screen_blind.fits" outfile="'+\
+            spec_dir+'le_spec_blind" eventtype=1 userdetid="'+\
+            det+'" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
+    print spec_text
+    os.system(spec_text)
+    
+    ## carry out barycentering correction
+    if args.hxbary:
+        # carry out hxbary
+        ra = args.ra
+        dec = args.dec
+        hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+        print hxbary_text
+        os.system(hxbary_text)
 
-    if args.detlist:
-        det =  args.detlist;
-        print "detector list:",det
-        ## select good event data
-        lescreen_text = 'lescreen evtfile='+tmp_dir+'le_recon.fits gtifile='+tmp_dir+'le_gti_new.fits outfile='+clean_dir+'le_screen.fits userdetid="'+det+'"'+\
-                ' baddetfile=$HEADAS/refdata/ledetectorstatus.fits eventtype=1 starttime=0 stoptime=0 minPI=0 maxPI=1536'+\
-                ' clobber=yes history=yes'
-        print lescreen_text
-        os.system(lescreen_text)
-        # spectra generating
-        spec_text = 'lespecgen evtfile="'+clean_dir+'le_screen.fits" outfile="'+\
-                spec_dir+'le_spec" eventtype=1 userdetid="'+\
-                det+'" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
-        print spec_text
-        os.system(spec_text)
-        
-        ## carry out barycentering correction
-        if args.hxbary:
-            # carry out hxbary
-            ra = args.ra
-            dec = args.dec
-            hxbary_text = 'hxbary' + ' ' + clean_dir + 'le_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-            print hxbary_text
-            os.system(hxbary_text)
+    lebkgmap(product_dir, clean_dir + 'le_screen_blind.fits', tmp_dir + 'le_gti.fits')
+    lelcgen(lc_dir, clean_dir+'le_screen_smfov.fits', clean_dir+'le_screen_blind.fits', ehkfilename, tmp_dir+'le_gti.fits',
+            tempfilename, binsize=1, minPI=150, maxPI=850)
+
+def lelcgen(lc_dir, screenfile, blindfile, ehkfile, gtifile, tempfile, binsize=1, minPI=150, maxPI=850):
+    det =   '0,2-4,6-10,12,14,20,22-26,28-30,'+\
+            '32,34-36,38-42,44,46,52,54-58,60-62,'+\
+            '64,66-68,70-74,76,78,84,86-90,92-94;'
+    lelc_text = 'lelcgen evtfile="'+screenfile+'" outfile="'+lc_dir+'le_lc_smfov'+'" '\
+            ' userdetid="'+det+'" binsize='+str(binsize)+' starttime=0 stoptime=0'+\
+            ' minPI='+str(minPI)+' maxPI='+str(maxPI)+' eventtype=1 clobber=yes'
+    print lelc_text
+    os.system(lelc_text)
+
+    listfile = os.path.join(lc_dir,'le_lc.txt')
+    create_listfile_text = "ls %s | sort -V > %s"%(os.path.join(lc_dir,'le_lc_smfov_g*'),listfile)
+    print create_listfile_text
+    os.system(create_listfile_text)
+    lcbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/lebkgmap.py lc '+blindfile +' '+ \
+            gtifile + ' ' + listfile +' '+str(minPI)+' '+str(maxPI)+' '+ os.path.join(lc_dir, 'le_lc_bkg')
+    print lcbkgmap_text
+    os.system(lcbkgmap_text)
+
+def lebkgmap(product_path, blindfile, gtifile):
+    listfile = os.path.join(product_dir,'LE','spectra','le_spec.txt')
+    create_listfile_text = "ls %s | sort -V > %s"%(os.path.join(product_dir,'LE','spectra','le_spec_smfov_g*'),listfile)
+    print create_listfile_text
+    os.system(create_listfile_text)
+    specbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/lebkgmap.py spec '+blindfile +' '+ \
+            gtifile + ' ' + listfile + ' 0 1535 '+ os.path.join(product_path,'LE','spectra','le_bkg_spec')
+    print specbkgmap_text
+    os.system(specbkgmap_text)
 
 if args.inputlist:
     inputfile = open(args.inputlist)

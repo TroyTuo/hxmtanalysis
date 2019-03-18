@@ -5,14 +5,11 @@
 #   Parameters:
 #       -i/--input, absolute PATH of archived input data
 #       -o/--output, absolute PATH of archived output data
-#       --nai, NaI Events flag(exclude CsI Events)
-#       --detlist, detector list
-#       --blinddet, flag that generate screen file for blind detector separately
 #       --hxbary, barycentering correction flag
 #       -r/--ra, right ascension of point source 
 #       -d/--dec, declination of point source
 #   Example:
-#       python he_pipeline.py -i /HXMT_DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --detlist "0-15,17" --blinddet --nai --hxbary -r 83.6331 -d 22.1446
+#       python he_pipeline.py -i /HXMT_DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --hxbary -r 83.6331 -d 22.1446
 #################################
 
 
@@ -28,9 +25,9 @@ parser.add_argument("-i","--input",help="data archived path")
 parser.add_argument("-I","--inputlist",help="data archived path in list",type=str)
 parser.add_argument("-o","--output",help="products archived path")
 parser.add_argument("-O","--outputlist",help="products archived path in list",type=str)
-parser.add_argument("--nai",action="store_true",help="flag for selecting only NaI Events")
-parser.add_argument("--detlist",action="store",help="detector list")
-parser.add_argument("--blinddet",action="store_true",help="select  blind detectors")
+#parser.add_argument("--nai",action="store_true",help="flag for selecting only NaI Events")
+#parser.add_argument("--detlist",action="store",help="detector list")
+#parser.add_argument("--blinddet",action="store_true",help="select  blind detectors")
 parser.add_argument("--hxbary",action="store_true",help="carry out Barycentric correction")
 parser.add_argument("-r","--ra",help="right ascension of barycentering correction",type=float)
 parser.add_argument("-d","--dec",help="declination of barycentering correction",type=float)
@@ -44,6 +41,7 @@ def main():
     clean_dir = product_dir + "/HE/cleaned/"  # HE cleaned data path
     tmp_dir = product_dir + "/HE/tmp/" # HE temporary data
     spec_dir = product_dir +"/HE/spectra/" # spectra results path
+    lc_dir = product_dir + "/HE/lightcurve/" # light curve results path
     
     #make direction for data structure
     if not os.path.isdir(product_dir):os.system('mkdir -p '+product_dir)
@@ -53,6 +51,7 @@ def main():
     if not os.path.isdir(clean_dir):os.system('mkdir -p '+clean_dir)
     if not os.path.isdir(tmp_dir):os.system('mkdir -p '+tmp_dir)
     if not os.path.isdir(spec_dir):os.system('mkdir -p '+spec_dir)
+    if not os.path.isdir(lc_dir):os.system('mkdir -p '+lc_dir)
     
     #read filenames
     filename     = sorted(glob.glob(data_dir + '/HE/*HE-Evt_FFFFFF_V[1-9]*'))[-1]
@@ -96,123 +95,89 @@ def main():
     os.system(hegtigen_text) 
     
     ## select good Events
-    det = ''
-    if args.detlist:
-        det = det + args.detlist
-        # select NaI Events
-        if args.nai:
-            hescreen_text = 'hescreen evtfile="'+tmp_dir+'he_pi.fits" gtifile="'+tmp_dir+'he_gti.fits" outfile="'+clean_dir+'he_screen_NaI.fits"'+\
-            ' baddetfile="" userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
-            ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
-            ' minpulsewidth=54 maxpulsewidth=70'+\
-            ' clobber=yes history=yes'
-            print hescreen_text
-            os.system(hescreen_text)
-            # spectra generating
-            spec_text = 'hespecgen evtfile="'+clean_dir+'he_screen_NaI.fits" outfile="'+\
-                    spec_dir+'he_spec_NaI" deadfile="'+deadfilename+'" userdetid="'+\
-                    '0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;17" eventtype=1 starttime=0 '+\
-                    'stoptime=0 minPI=0 maxPI=255' 
-            print spec_text
-            os.system(spec_text)
+    det = "0-17"
+    hescreen_text = 'hescreen evtfile="'+tmp_dir+'he_pi.fits" gtifile="'+tmp_dir+'he_gti.fits" outfile="'+clean_dir+'he_screen.fits"'+\
+    ' userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
+    ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
+    ' clobber=yes history=yes'
+    print hescreen_text
+    os.system(hescreen_text)
+    # spectra generating
+    spec_text = 'hespecgen evtfile="'+clean_dir+'he_screen.fits" outfile="'+\
+            spec_dir+'he_spec" deadfile="'+deadfilename+'" userdetid="'+\
+            '0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17" eventtype=1 starttime=0 '+\
+            'stoptime=0 minPI=0 maxPI=255'
+    print spec_text
+    os.system(spec_text)
 
-            # carry out barycentering correction
-            if args.hxbary:
-                try:
-                    os.system('cp ' + preciseorbitname + ' ' + acs_dir)
-                    # carry out hxbary
-                    ra = args.ra
-                    dec = args.dec
-                    hxbary_text = 'hxbary' + ' ' + clean_dir + 'he_screen_NaI.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-                    print hxbary_text
-                    os.system(hxbary_text)
-                except:
-                    print 'WARNING: NO Precise Orbit file('+data_dir+')'
-        else:
-            hescreen_text = 'hescreen evtfile="'+tmp_dir+'he_pi.fits" gtifile="'+tmp_dir+'he_gti.fits" outfile="'+clean_dir+'he_screen.fits"'+\
-            ' baddetfile="" userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
-            ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
-            ' minpulsewidth=20 maxpulsewidth=70'+\
-            ' clobber=yes history=yes'
-            print hescreen_text
-            os.system(hescreen_text)
-            # spectra generating
-            spec_text = 'hespecgen evtfile="'+clean_dir+'he_screen.fits" outfile="'+\
-                    spec_dir+'he_spec" deadfile="'+deadfilename+'" userdetid="'+\
-                    '0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;17" eventtype=1 starttime=0 '+\
-                    'stoptime=0 minPI=0 maxPI=255' 
-            print spec_text
-            os.system(spec_text)
-            # carry out barycentering correction
-            if args.hxbary:
-                try:
-                    os.system('cp ' + preciseorbitname + ' ' + acs_dir)
-                    # carry out hxbary
-                    ra = args.ra
-                    dec = args.dec
-                    hxbary_text = 'hxbary' + ' ' + clean_dir + 'he_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-                    print hxbary_text
-                    os.system(hxbary_text)
-                except:
-                    print 'WARNING: NO Precise Orbit file('+data_dir+')'
+    # carry out barycentering correction
+    if args.hxbary:
+        try:
+            os.system('cp ' + preciseorbitname + ' ' + acs_dir)
+            # carry out hxbary
+            ra = args.ra
+            dec = args.dec
+            hxbary_text = 'hxbary' + ' ' + clean_dir + 'he_screen.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            print hxbary_text
+            os.system(hxbary_text)
+        except:
+            print 'WARNING: NO Precise Orbit file('+data_dir+')'
     
-    if args.blinddet:
-        det = '16'
-        # select NaI Events
-        if args.nai:
-            hescreen_text = 'hescreen evtfile="'+tmp_dir+'he_pi.fits" gtifile="'+tmp_dir+'he_gti.fits" outfile="'+clean_dir+'he_screen_NaI_blind.fits"'+\
-            ' baddetfile="$HEADAS/refdata/hedetectorstatus.fits" userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
-            ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
-            ' minpulsewidth=54 maxpulsewidth=70'+\
-            ' clobber=yes history=yes'
-            print hescreen_text
-            os.system(hescreen_text)
-            # spectra generating
-            spec_text = 'hespecgen evtfile="'+clean_dir+'he_screen_NaI_blind.fits" outfile="'+\
-                    spec_dir+'he_spec_NaI_blind" deadfile="'+deadfilename+'" userdetid="'+\
-                    '16" eventtype=1 starttime=0 '+\
-                    'stoptime=0 minPI=0 maxPI=255' 
-            print spec_text
-            os.system(spec_text)
-            # carry out barycentering correction
-            if args.hxbary:
-                try:
-                    os.system('cp ' + preciseorbitname + ' ' + acs_dir)
-                    # carry out hxbary
-                    ra = args.ra
-                    dec = args.dec
-                    hxbary_text = 'hxbary' + ' ' + clean_dir + 'he_screen_NaI_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-                    print hxbary_text
-                    os.system(hxbary_text)
-                except:
-                    print 'WARNING: NO Precise Orbit file('+data_dir+')'
-        else:
-            hescreen_text = 'hescreen evtfile="'+tmp_dir+'he_pi.fits" gtifile="'+tmp_dir+'he_gti.fits" outfile="'+clean_dir+'he_screen_blind.fits"'+\
-            ' baddetfile="$HEADAS/refdata/hedetectorstatus.fits" userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
-            ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
-            ' minpulsewidth=20 maxpulsewidth=70'+\
-            ' clobber=yes history=yes'
-            print hescreen_text
-            os.system(hescreen_text)
-            # spectra generating
-            spec_text = 'hespecgen evtfile="'+clean_dir+'he_screen_NaI_blind.fits" outfile="'+\
-                    spec_dir+'he_spec_blind" deadfile="'+deadfilename+'" userdetid="'+\
-                    '16" eventtype=1 starttime=0 '+\
-                    'stoptime=0 minPI=0 maxPI=255' 
-            print spec_text
-            os.system(spec_text)
-            # carry out barycentering correction
-            if args.hxbary:
-                try:
-                    os.system('cp ' + preciseorbitname + ' ' + acs_dir)
-                    # carry out hxbary
-                    ra = args.ra
-                    dec = args.dec
-                    hxbary_text = 'hxbary' + ' ' + clean_dir + 'he_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
-                    print hxbary_text
-                    os.system(hxbary_text)
-                except:
-                    print 'WARNING: NO Precise Orbit file('+data_dir+')'
+    det = '16'
+    hescreen_text = 'hescreen evtfile="'+tmp_dir+'he_pi.fits" gtifile="'+tmp_dir+'he_gti.fits" outfile="'+clean_dir+'he_screen_blind.fits"'+\
+    ' userdetid="'+det+'" eventtype=1 anticoincidence=yes'+\
+    ' starttime=0 stoptime=0 minPI=0 maxPI=255'+\
+    ' clobber=yes history=yes'
+    print hescreen_text
+    os.system(hescreen_text)
+    # carry out barycentering correction
+    if args.hxbary:
+        try:
+            os.system('cp ' + preciseorbitname + ' ' + acs_dir)
+            # carry out hxbary
+            ra = args.ra
+            dec = args.dec
+            hxbary_text = 'hxbary' + ' ' + clean_dir + 'he_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
+            print hxbary_text
+            os.system(hxbary_text)
+        except:
+            print 'WARNING: NO Precise Orbit file('+data_dir+')'
+    hespecgen(product_dir, clean_dir+'he_screen_blind.fits', ehkfilename, tmp_dir+'he_gti.fits', deadfilename)
+    helcgen(lc_dir, clean_dir+'he_screen.fits', clean_dir+'he_screen_blind.fits', deadfilename, ehkfilename, tmp_dir+'he_gti.fits',
+            binsize=1, minPI=25, maxPI=100)
+
+    return
+
+
+def helcgen(lc_dir, screenfile, blindfile, deadfile, ehkfile, gtifile, binsize=1, minPI=25, maxPI=100):
+    helc_text = 'helcgen evtfile="'+screenfile+'" outfile="'+lc_dir+'he_lc'+'" deadfile="'+deadfile+\
+            '" userdetid="0-15,17" binsize='+str(binsize)+' starttime=0 stoptime=0'+\
+            ' minPI='+str(minPI)+' maxPI='+str(maxPI)+' deadcorr=no clobber=yes'
+    print helc_text
+    os.system(helc_text)
+
+    listfile = os.path.join(product_dir,'HE','lightcurve','he_lc.txt')
+    create_listfile_text = "ls %s | sort -V > %s"%(os.path.join(product_dir,'HE','lightcurve','he_lc_g*'),listfile)
+    print create_listfile_text
+    os.system(create_listfile_text)
+    lcbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/hebkgmap.py lc %s %s %s %s %s  0 255 %s'%(blindfile, ehkfile, gtifile,
+            deadfile, listfile, lc_dir+'he_lc_bkg')
+    print lcbkgmap_text
+    os.system(lcbkgmap_text)
+
+
+def hespecgen(product_dir, blindfile, ehkfile, gtifile, deadfile):
+    listfile = os.path.join(product_dir,'HE','spectra','he_spec.txt')
+    create_listfile_text = "ls %s | sort -V > %s"%(os.path.join(product_dir,'HE','spectra','he_spec_g*'),listfile)
+    print create_listfile_text
+    os.system(create_listfile_text)
+
+    specbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/hebkgmap.py spec '+blindfile +' '+ \
+            ehkfile + ' ' + gtifile + ' ' +  deadfile + ' ' + listfile + ' 0 255 '+\
+            os.path.join(product_dir,'HE','spectra','he_spec_bkg')
+    print specbkgmap_text
+    os.system(specbkgmap_text)
+
 
 if args.inputlist:
     inputfile = open(args.inputlist)
