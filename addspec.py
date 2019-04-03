@@ -198,7 +198,6 @@ def merge_rsp(rspfiles, outrsp, specfiles, bkgfiles):
     matrix_tmp = []
     exposure_tmp = 0.0
     for resp, spectrum, background in zip(rspfiles, specfiles, bkgfiles):
-        print(resp, spectrum, background)
         exposure_spec, _, _, _, _, _ = get_fits_info(spectrum)
         exposure_bkg , _, _, _, _, _ = get_fits_info(background)
         hdulist = fits.open(resp)
@@ -210,7 +209,6 @@ def merge_rsp(rspfiles, outrsp, specfiles, bkgfiles):
     for i in xrange(len(matrix_tmp)):
         if i == 0 :continue
         matrix_i = matrix_i + matrix_tmp[i]
-    print("mmmmmmmm",exposure_tmp)
     matrix = matrix_i / exposure_tmp
     create_rspfile(ENERG_LO, ENERG_HI, N_GRP, F_CHAN, N_CHAN, matrix, 
             CHANNEL, E_MIN, E_MAX, matrix_format, outrsp,
@@ -348,3 +346,4 @@ if __name__ == "__main__":
     merge_spec(spectra, outspec)
     merge_bkg(background, outback, spectra, mission='HXMT')
     merge_rsp(response, outrsp, spectra, background)
+    print("DONE")
