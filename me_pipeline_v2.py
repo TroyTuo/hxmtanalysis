@@ -34,6 +34,7 @@ def main():
     tmp_dir = product_dir + "/ME/tmp/" # ME temporary data
     spec_dir = product_dir +"/ME/spectra/" # spectra results path
     lc_dir = product_dir +"/ME/lightcurve/" #light curve results path
+    rsp_dir = product_dir + "/ME/rsp/" # RSP results path
 
 
     #make directory for data structure
@@ -45,6 +46,7 @@ def main():
     if not os.path.isdir(tmp_dir):os.system('mkdir -p '+tmp_dir)
     if not os.path.isdir(spec_dir):os.system('mkdir -p '+spec_dir)
     if not os.path.isdir(lc_dir):os.system('mkdir -p '+lc_dir)
+    if not os.path.isdir(rsp_dir):os.system('mkdir -p '+rsp_dir)
     
     #read filenames
     print data_dir
@@ -76,7 +78,7 @@ def main():
     os.system(megrade_text)
 
     ## new gti selection
-    menewgti_text = 'megti '+tmp_dir+'me_grade.fits '+tmp_dir+'me_gti.fits '+tmp_dir+'me_gti.fits'
+    menewgti_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/megti.py '+tmp_dir+'me_grade.fits '+tmp_dir+'me_gti.fits '+tmp_dir+'me_gti.fits'
     print(menewgti_text)
     try:
         os.system(menewgti_text)
@@ -110,6 +112,9 @@ def main():
             det+'" starttime=0 stoptime=0 minPI=0 maxPI=1023' 
     print spec_text
     os.system(spec_text)
+
+    ## generate RSP file
+    merspgen(product_dir, attname, -1, -91)
     
     # carry out barycentering correction
     if args.hxbary:
@@ -119,7 +124,6 @@ def main():
         hxbary_text = 'hxbary' + ' ' + clean_dir + 'me_screen_blind.fits' + ' ' + preciseorbitname + ' ' + str(ra) + ' ' + str(dec) + ' ' + '2'
         print hxbary_text
         os.system(hxbary_text)
-
 
     # carry out barycentering correction
     if args.hxbary:
@@ -161,6 +165,16 @@ def mebkgmap(product_path, blindfile, ehkfile, gtifile, deadfile, tempfile):
             listfile + ' 0 1024 '+ os.path.join(product_path,'ME','spectra','me_bkg_spec')
     print specbkgmap_text
     os.system(specbkgmap_text)
+
+def merspgen(product_path, attfile, ra, dec):
+    phafile = glob.glob(product_path+"/ME/spectra/me_spec_smfov_g*")[0]
+    outfile = os.path.join(product_dir,'ME','rsp','me_rsp.fits')
+    attfile = attfile
+    ra = str(ra)
+    dec = str(dec)
+    rsp_text = "herspgen %s %s %s %s %s clobber"%(phafile, outfile, attfile, ra, dec)
+    print(rsp_text)
+    os.system(rsp_text)
 
 if args.inputlist:
     inputfile = open(args.inputlist)

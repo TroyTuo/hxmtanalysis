@@ -17,12 +17,6 @@ parser.add_argument("-i","--input",help="data archived path")
 parser.add_argument("-I","--inputlist",help="data archived path in list",type=str)
 parser.add_argument("-o","--output",help="products archived path")
 parser.add_argument("-O","--outputlist",help="products archived path in list",type=str)
-#parser.add_argument("--rangefile",action="store_true",help="rangefile path of hegtigen is $hxmtanalysis")
-#parser.add_argument("--detlist",action="store",help="detector list")
-#parser.add_argument("--bigfovdet",action="store_true",help="select big fov detectors of three boxes")
-#parser.add_argument("--midfovdet",action="store_true",help="select mid fov detectors of three boxes")
-#parser.add_argument("--smfovdet",action="store_true",help="select small fov detectors of three boxes")
-#parser.add_argument("--blinddet",action="store_true",help="select all blind detectors")
 parser.add_argument("--hxbary",action="store_true",help="carry out Barycentric correction")
 parser.add_argument("-r","--ra",help="right ascension of barycentering correction",type=float)
 parser.add_argument("-d","--dec",help="declination of barycentering correction",type=float)
@@ -36,6 +30,7 @@ def main():
     tmp_dir = product_dir + "/LE/tmp/" # LE temporary data
     spec_dir = product_dir +"/LE/spectra/" # spectra results path
     lc_dir = product_dir +"/LE/lightcurve/" #light curve results path
+    rsp_dir = product_dir + "/LE/rsp/" # RSP results path
     
     
     #make direction for data structure
@@ -47,6 +42,7 @@ def main():
     if not os.path.isdir(tmp_dir):os.system('mkdir -p '+tmp_dir)
     if not os.path.isdir(spec_dir):os.system('mkdir -p '+spec_dir)
     if not os.path.isdir(lc_dir):os.system('mkdir -p '+lc_dir)
+    if not os.path.isdir(rsp_dir):os.system('mkdir -p '+rsp_dir)
     
     #read filenames
     filename = sorted(glob.glob(data_dir + '/LE/*LE-Evt_FFFFFF_V[1-9]*'))[-1]
@@ -78,7 +74,7 @@ def main():
     print legtigen_text
     os.system(legtigen_text) 
     ## new git selection
-    lenewgti_text = 'legti '+tmp_dir+'le_recon.fits '+tmp_dir+'le_gti.fits '+tmp_dir+'le_gti.fits'
+    lenewgti_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/legti.py '+tmp_dir+'le_recon.fits '+tmp_dir+'le_gti.fits '+tmp_dir+'le_gti.fits'
     print(lenewgti_text)
     try:
         os.system(lenewgti_text)
@@ -127,6 +123,9 @@ def main():
             det+'" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
     print spec_text
     os.system(spec_text)
+
+    ## generate RSP file
+    lerspgen(product_dir, attname, tempfilename, -1, -91)
     
     ## carry out barycentering correction
     if args.hxbary:
@@ -169,6 +168,17 @@ def lebkgmap(product_path, blindfile, gtifile):
             gtifile + ' ' + listfile + ' 0 1535 '+ os.path.join(product_path,'LE','spectra','le_bkg_spec')
     print specbkgmap_text
     os.system(specbkgmap_text)
+
+def lerspgen(product_path, attfile, tempfile, ra, dec):
+    phafile = glob.glob(product_path+"/LE/spectra/le_spec_smfov_g*")[0]
+    outfile = os.path.join(product_dir,'LE','rsp','le_rsp.fits')
+    attfile = attfile
+    tempfile = tempfile
+    ra = str(ra)
+    dec = str(dec)
+    rsp_text = "herspgen %s %s %s %s %s %s clobber"%(phafile, outfile, attfile, tempfile, ra, dec)
+    print(rsp_text)
+    os.system(rsp_text)
 
 if args.inputlist:
     inputfile = open(args.inputlist)

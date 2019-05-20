@@ -38,10 +38,6 @@ def read_file(datafile, colname='TDB', time_cut=30):
         time.append(time_all)
     else:
         edges = np.arange(min(time_all),max(time_all),time_cut*86400)
-        edges = np.array([5.19180059e+08, 5.21772059e+08, 5.24364059e+08, 5.26956059e+08,
-            5.29548059e+08, 5.32140059e+08, 5.34732059e+08, 5.37324059e+08,
-            5.39916059e+08, 5.43888000e+08, 5.45100059e+08, 5.47692059e+08,
-            5.50284059e+08, 5.52876059e+08, 5.55468059e+08])
         for i in xrange(len(edges[0:-1])):
             edge0 = edges[i]
             edge1 = edges[i+1]
