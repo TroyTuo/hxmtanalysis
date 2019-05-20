@@ -10,6 +10,7 @@ import os
 import sys
 import glob
 from time import sleep
+from tqdm import tqdm
 
 
 # sigma of sinal
@@ -140,7 +141,7 @@ def readhv(hvfilename,phonum=0):
 
 
 
-def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_cs=20,bin_profile=20,t0=0):
+def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=False,bin_cs=20,bin_profile=20,t0=0):
 
     if t0 == 0:
         t0 =min(data)
@@ -154,31 +155,39 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
     b = N/bin_cs
     f = np.arange(fmin,fmax,fstep)
     #f1 = np.arange(f1min,f1max,f1step)
-    chi_square = [0] * len(f)
+    #chi_square = [0] * len(f)
+    chi_square = np.array([])
 
-
-    for i in range(0,len(f)):
-        data = data - t_0
-        phi_tmp = np.mod(data*f[i] + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
+    for i in tqdm(range(0, len(f))):
+        phi_tmp = np.mod((data-t_0)*f[i] + (1.0/2)*((data-t_0)**2)*f1 + (1.0/6.0)*((data-t_0)**3)*f2,1.0)
         p_num = np.histogram(phi_tmp,bin_cs)[0]
-        bb = b * np.ones(bin_cs)
-        chi_square[i] = np.sum((p_num-bb)**2)/b
+#        chi_square = np.append(chi_square,(np.std(p_num)**2/np.mean(p_num)))
+        chi_square = np.append(chi_square, np.sum(((p_num-b)**2)/b))
 
-        percent = float(i)*100/len(f)
-        sys.stdout.write(" fsearch complete: %.2f"%percent);
-        sys.stdout.write("%\r");
-        sys.stdout.flush()
+#    for i in range(0,len(f)):
+#        data = data - t_0
+#        phi_tmp = np.mod(data*f[i] + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
+#        p_num = np.histogram(phi_tmp,bin_cs)[0]
+#        bb = b * np.ones(bin_cs)
+#        chi_square[i] = np.sum((p_num-bb)**2)/b
+#
+#        percent = float(i)*100/len(f)
+#        sys.stdout.write(" fsearch complete: %.2f"%percent);
+#        sys.stdout.write("%\r");
+#        sys.stdout.flush()
     print '\n'
-    fbest = f[chi_square.index(max(chi_square))]
-    phi = np.mod(data*fbest + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
+    fbest = f[np.where(chi_square==max(chi_square))][0]
+    phi = np.mod((data-t_0)*fbest + ((data-t_0)**2)*f1*0.5 + ((data-t_0)**3)*f2/6,1.0)
     p_num = np.histogram(phi,bin_profile)[0]
     p_num = p_num/np.mean(p_num)
     #p_num = p_num/(max(data)-min(data))
     p_num_x = np.arange(0.,bin_profile,1)/bin_profile
 
-    p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
-    p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
-    p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
+    p_num_x_2 = np.append(p_num_x, p_num_x+1)
+    p_num_2 = np.append(p_num, p_num)
+#    p_num_x_2_tmp = p_num_x + 1;p_num_x_2_tmp.tolist();
+#    p_num_x_2 = p_num_x.tolist();p_num_2 = p_num.tolist();
+#    p_num_x_2.extend(p_num_x_2_tmp);p_num_2.extend(p_num_2);
 
     print "fbest: ",fbest
     print "T: ",1/fbest
@@ -199,14 +208,12 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
             plt.subplot(2,1,2)
             plt.title('chisquare test')
             plt.plot(f,chi_square)
-            plt.show()
         else:
             plt.figure('results')
             plt.subplot(2,1,1)
             plt.plot(p_num_x,p_num)
             plt.subplot(2,1,2)
             plt.plot(f,chi_square)
-            plt.show()
 
     if pannel:
         # annotation text
@@ -216,7 +223,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=True,bin_
         bbox=dict(facecolor='white', alpha=0.8),
         horizontalalignment='right', verticalalignment='top')
 
-    return p_num_x_2,p_num_2,f,chi_square
+    return p_num_x_2,p_num_2,f,chi_square, fbest
 
 def psearch(data,p0,prange,pstep,fig=False,pannel=True,prefix='',bin_cs=1000,t0=0):
     #import data

@@ -109,7 +109,7 @@ def merge_spec(spectra, outspec):
 
     exposure_tmp, instrument_tmp, telescop_tmp, backfile_tmp, chanum_tmp, respfile_tmp = get_fits_info(spectra[0])
 
-    expsure_new = 0.0
+    exposure = 0.0
     instrument_new = instrument_tmp
     counts_new = np.zeros(chanum_tmp)
 
@@ -120,7 +120,7 @@ def merge_spec(spectra, outspec):
 
         if instrument == instrument_new:
             instrume_new = instrument
-            exposure_new = expsure_new + exposure
+            exposure_new = exposure_new + exposure
 
             hdulist = fits.open(spectrum)
             counts  = hdulist[1].data.field("COUNTS")
@@ -144,7 +144,7 @@ def merge_bkg(backgrounds, outspec, spectra='', mission='HXMT'):
     exposure_spectmp, instrument_spectmp, telescop_spectmp, backfile_spectmp, chanum_spectmp, respfile_spectmp = get_fits_info(spectra[0])
     exposure_bkg, instrument_bkg, telescop_bkg, backfile_bkg, chanum_bkg, respfile_bkg = get_fits_info(backgrounds[0])
 
-    expsure_new = 0.0
+    exposure_new = 0.0
     instrument_new = instrument_bkg
     counts_new = np.zeros(chanum_bkg)
 
@@ -157,7 +157,7 @@ def merge_bkg(backgrounds, outspec, spectra='', mission='HXMT'):
         if instrument == instrument_new:
             instrume_new = instrument
             #use spectrum exposure time
-            exposure_new = expsure_new + exposure_spec
+            exposure_new = exposure_new + exposure_spec
 
             hdulist = fits.open(background)
             counts  = hdulist[1].data.field("COUNTS")
