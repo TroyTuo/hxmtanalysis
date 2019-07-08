@@ -176,7 +176,7 @@ def lerspgen(product_path, attfile, tempfile, ra, dec):
     tempfile = tempfile
     ra = str(ra)
     dec = str(dec)
-    rsp_text = "herspgen %s %s %s %s %s %s clobber"%(phafile, outfile, attfile, tempfile, ra, dec)
+    rsp_text = "lerspgen %s %s %s %s %s %s clobber"%(phafile, outfile, attfile, tempfile, ra, dec)
     print(rsp_text)
     os.system(rsp_text)
 
