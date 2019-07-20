@@ -12,7 +12,7 @@ import commands
 
 # find and create data dir list
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-        description='Example: python le_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --smfovdet --blinddet --hxbary -r 83.63322083 -d 22.014461')
+        description='Example: python le_pipeline.py -i /DATA_PATH/ObID/ -o /OUTPUT_PATH/ObID/ --hxbary -r 83.63322083 -d 22.014461')
 parser.add_argument("-i","--input",help="data archived path")
 parser.add_argument("-I","--inputlist",help="data archived path in list",type=str)
 parser.add_argument("-o","--output",help="products archived path")
@@ -98,7 +98,7 @@ def main():
             spec_dir+'le_spec" eventtype=1 userdetid="'+\
             '0,2-4,6-10,12,14,20,22-26,28-30,'+\
             '32,34-36,38-42,44,46,52,54-58,60-62,'+\
-            '64,66-68,70-74,76,78,84,86-90,92-94,21,53,85'+\
+            '64,66-68,70-74,76,78,84,86-90,92-94'+\
             '" starttime=0 stoptime=0 minPI=0 maxPI=1535' 
     print spec_text
     os.system(spec_text)
@@ -123,7 +123,7 @@ def main():
 def lelcgen(lc_dir, screenfile, blindfile, ehkfile, gtifile, tempfile, binsize=1, minPI=150, maxPI=850):
     det =   '0,2-4,6-10,12,14,20,22-26,28-30,'+\
             '32,34-36,38-42,44,46,52,54-58,60-62,'+\
-            '64,66-68,70-74,76,78,84,86-90,92-94,21,53,85;'
+            '64,66-68,70-74,76,78,84,86-90,92-94;'
     lelc_text = 'lelcgen evtfile="'+screenfile+'" outfile="'+lc_dir+'le_lc'+'" '\
             ' userdetid="'+det+'" binsize='+str(binsize)+' starttime=0 stoptime=0'+\
             ' minPI='+str(minPI)+' maxPI='+str(maxPI)+' eventtype=1 clobber=yes'
