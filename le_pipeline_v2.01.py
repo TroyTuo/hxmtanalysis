@@ -74,7 +74,7 @@ def main():
     print legtigen_text
     os.system(legtigen_text) 
     ## new git selection
-    lenewgti_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/legti.py '+tmp_dir+'le_recon.fits '+tmp_dir+'le_gti.fits '+tmp_dir+'le_gti.fits'
+    lenewgti_text = 'python /home/hxmt/hxmtsoft2/hxmtsoftv2.01/install/hxmt/x86_64-pc-linux-gnu-libc2.12/HXMTBKG/soft/legti.py '+tmp_dir+'le_recon.fits '+tmp_dir+'le_gti.fits '+tmp_dir+'le_gti.fits'
     print(lenewgti_text)
     try:
         os.system(lenewgti_text)
@@ -134,7 +134,7 @@ def lelcgen(lc_dir, screenfile, blindfile, ehkfile, gtifile, tempfile, binsize=1
     create_listfile_text = "ls %s | sort -V > %s"%(os.path.join(lc_dir,'le_lc_g*'),listfile)
     print create_listfile_text
     os.system(create_listfile_text)
-    lcbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/lebkgmap.py lc '+blindfile +' '+ \
+    lcbkgmap_text = 'python /home/hxmt/hxmtsoft2/hxmtsoftv2.01/install/hxmt/x86_64-pc-linux-gnu-libc2.12/HXMTBKG/soft/lebkgmap.py lc '+blindfile +' '+ \
             gtifile + ' ' + listfile +' '+str(minPI)+' '+str(maxPI)+' '+ os.path.join(lc_dir, 'le_lc_bkg')
     print lcbkgmap_text
     os.system(lcbkgmap_text)
@@ -144,7 +144,7 @@ def lebkgmap(product_path, blindfile, gtifile):
     create_listfile_text = "ls %s | sort -V > %s"%(os.path.join(product_dir,'LE','spectra','le_spec_g*'),listfile)
     print create_listfile_text
     os.system(create_listfile_text)
-    specbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/lebkgmap.py spec '+blindfile +' '+ \
+    specbkgmap_text = 'python /home/hxmt/hxmtsoft2/hxmtsoftv2.01/install/hxmt/x86_64-pc-linux-gnu-libc2.12/HXMTBKG/soft/lebkgmap.py spec '+blindfile +' '+ \
             gtifile + ' ' + listfile + ' 0 1535 '+ os.path.join(product_path,'LE','spectra','le_bkg_spec')
     print specbkgmap_text
     os.system(specbkgmap_text)

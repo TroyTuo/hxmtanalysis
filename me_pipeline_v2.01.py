@@ -78,7 +78,7 @@ def main():
     os.system(megrade_text)
 
     ## new gti selection
-    menewgti_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/megti.py '+tmp_dir+'me_grade.fits '+tmp_dir+'me_gti.fits '+tmp_dir+'me_gti.fits'
+    menewgti_text = 'python /home/hxmt/hxmtsoft2/hxmtsoftv2.01/install/hxmt/x86_64-pc-linux-gnu-libc2.12/HXMTBKG/soft/megti.py '+tmp_dir+'me_grade.fits '+tmp_dir+'me_gti.fits '+tmp_dir+'me_gti.fits'
     print(menewgti_text)
     try:
         os.system(menewgti_text)
@@ -127,7 +127,7 @@ def melcgen(lc_dir, screenfile, blindfile, deadfile, ehkfile, gtifile, tempfile,
     create_listfile_text = "ls %s | sort -V > %s"%(os.path.join(product_dir,'ME','lightcurve','me_lc_g*'),listfile)
     print create_listfile_text
     os.system(create_listfile_text)
-    lcbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/mebkgmap.py lc '+blindfile +' '+ \
+    lcbkgmap_text = 'python /home/hxmt/hxmtsoft2/hxmtsoftv2.01/install/hxmt/x86_64-pc-linux-gnu-libc2.12/HXMTBKG/soft/mebkgmap.py lc '+blindfile +' '+ \
             ehkfile + ' ' + gtifile + ' ' +  deadfile + ' ' + tempfile +' '+\
             listfile +' '+str(minPI)+' '+str(maxPI)+' '+os.path.join(lc_dir,'me_lc_bkg')
     print lcbkgmap_text
@@ -138,7 +138,7 @@ def mebkgmap(product_path, blindfile, ehkfile, gtifile, deadfile, tempfile):
     create_listfile_text = "ls %s | sort -V > %s"%(os.path.join(product_dir,'ME','spectra','me_spec_g*'),listfile)
     print create_listfile_text
     os.system(create_listfile_text)
-    specbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/mebkgmap.py spec '+blindfile +' '+ \
+    specbkgmap_text = 'python /home/hxmt/hxmtsoft2/hxmtsoftv2.01/install/hxmt/x86_64-pc-linux-gnu-libc2.12/HXMTBKG/soft/mebkgmap.py spec '+blindfile +' '+ \
             ehkfile + ' ' + gtifile + ' ' +  deadfile + ' ' + tempfile +' '+\
             listfile + ' 0 1024 '+ os.path.join(product_path,'ME','spectra','me_bkg_spec')
     print specbkgmap_text

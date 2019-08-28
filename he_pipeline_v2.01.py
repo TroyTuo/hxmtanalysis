@@ -146,8 +146,8 @@ def helcgen(lc_dir, screenfile, blindfile, deadfile, ehkfile, gtifile, binsize=1
     create_listfile_text = "ls %s | sort -V > %s"%(os.path.join(product_dir,'HE','lightcurve','he_lc_g*'),listfile)
     print(create_listfile_text)
     os.system(create_listfile_text)
-    lcbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/hebkgmap.py lc %s %s %s %s %s  0 255 %s'%(blindfile, ehkfile, gtifile,
-            deadfile, listfile, lc_dir+'he_lc_bkg')
+    lcbkgmap_text = 'python /home/hxmt/hxmtsoft2/hxmtsoftv2.01/install/hxmt/x86_64-pc-linux-gnu-libc2.12/HXMTBKG/soft/hebkgmap.py lc %s %s %s %s %s %s %s %s'%(blindfile, ehkfile, gtifile,
+            deadfile, listfile, str(minPI), str(maxPI), lc_dir+'he_lc_bkg')
     print(lcbkgmap_text)
     os.system(lcbkgmap_text)
 
@@ -158,7 +158,7 @@ def hespecgen(product_dir, blindfile, ehkfile, gtifile, deadfile):
     print(create_listfile_text)
     os.system(create_listfile_text)
 
-    specbkgmap_text = 'python /home/hxmt/hxmtsoft2/soft/hxmtsoft-2.01/hxmt/BKG/BldSpec/hebkgmap.py spec '+blindfile +' '+ \
+    specbkgmap_text = 'python /home/hxmt/hxmtsoft2/hxmtsoftv2.01/install/hxmt/x86_64-pc-linux-gnu-libc2.12/HXMTBKG/soft/hebkgmap.py spec '+blindfile +' '+ \
             ehkfile + ' ' + gtifile + ' ' +  deadfile + ' ' + listfile + ' 0 255 '+\
             os.path.join(product_dir,'HE','spectra','he_spec_bkg')
     print(specbkgmap_text)

@@ -145,10 +145,11 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=False,bin
 
     if t0 == 0:
         t0 =min(data)
+    t_0 = t0
     #data = raw_data - min(raw_data);data.sort();
     raw_data = data
     #data = data - data[0]
-    t_0 = raw_data[0]
+#    t_0 = raw_data[0]
     N = len(data)
     # bin_cs=20 is DOF for chi_square test
     # bin_profile=20 is profile bin size
@@ -261,11 +262,14 @@ def psearch(data,p0,prange,pstep,fig=False,pannel=True,prefix='',bin_cs=1000,t0=
             horizontalalignment='right', verticalalignment='top')
     return pbest
 
-def pfold(data,f0,f1=0,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0):
+def pfold(data,f0,f1=0,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0,norm_flag="True"):
 
     raw_data = data
     if t0 == 0:
         t_0 = raw_data[0]
+    else:
+        t_0 = t0
+    data = data - t_0
     N = len(data)
     b = N/bin_cs
 
@@ -273,10 +277,10 @@ def pfold(data,f0,f1=0,f2=0,f3=0,f4=0,bin_cs=20,bin_profile=20,t0=0):
     phi = np.mod(data*fbest + (data**2)*f1*0.5 + (data**3)*f2/6,1.0)
     p_num = np.histogram(phi,bin_profile)[0]
     p_error = np.sqrt(p_num)
-    p_error = p_error/(max(p_num)-min(p_num)) # Error Normalization
+#    p_error = p_error/(max(p_num)-min(p_num)) # Error Normalization
 #    p_num = p_num/np.sum(p_num,dtype=np.float) # Normalization
 #    p_num = p_num/np.mean(p_num) # Normalization
-    p_num = (p_num-min(p_num))/(max(p_num)-min(p_num)) # Normalization
+#    p_num = (p_num-min(p_num))/(max(p_num)-min(p_num)) # Normalization
     p_num_x = np.arange(0.,bin_profile,1)/bin_profile
 
     p_num_x = np.append(p_num_x,p_num_x+1)

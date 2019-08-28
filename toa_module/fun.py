@@ -375,7 +375,7 @@ def toa_cal(time,parfile,duration,fstep=0,frange=0,f0_flag=True,f1_flag=True,f2_
             fbest = f[np.where(chi_square==max(chi_square))][0]
 
             #fold profile by fbest
-            phi = np.mod((data-t0)*f0 + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4 +
+            phi = np.mod((data-t0)*fbest + (1/2)*((data-t0)**2)*f1 + (1/6)*((data-t0)**3)*f2 + (1/24)*((data-t0)**4)*f3 + (1/120)*((data-t0)**5)*f4 +
                     (1/np.math.factorial(6))*((data-t0)**6)*f5 + (1/np.math.factorial(7))*((data-t0)**7)*f6 + (1/np.math.factorial(8))*((data-t0)**8)*f7 + 
                     (1/np.math.factorial(9))*((data-t0)**9)*f8 + (1/np.math.factorial(10))*((data-t0)**10)*f9 ,1.0)
             p_num = np.histogram(phi,bin_cs)[0]
@@ -479,7 +479,8 @@ def fsearch(time,parfile,duration,fstep,frange,f0_flag=True,f1_flag=True,f2_flag
         b = N/bin_cs
         #for f1 in np.arange(-3.72e-10,-3.69e-10,0.5e-12):
         for j in tqdm(range(0,len(f))):
-            phi_tmp = np.mod((data-t0)*f[j] + (1.0/2)*((data-t0)**2)*f1 + (1.0/6.0)*((data-t0)**3)*f2 + (1.0/24)*(data-t0)**f3,1.0)
+            phi_tmp = (data-t0)*f[j] + (1.0/2)*((data-t0)**2)*f1 + (1.0/6.0)*((data-t0)**3)*f2 + (1.0/24)*((data-t0)**4)*f3
+            phi_tmp -= np.floor(phi_tmp)
             p_num = np.histogram(phi_tmp,bin_cs)[0]
             #chi_square[j] = np.std(p_num)**2/np.mean(p_num)
             chi_square = np.append(chi_square,(np.std(p_num)**2/np.mean(p_num)))
