@@ -180,7 +180,7 @@ def fsearch(data,fmin,fmax,f1,f2,fstep,errorbar=False,fig=False,pannel=False,bin
     fbest = f[np.where(chi_square==max(chi_square))][0]
     phi = np.mod((data-t_0)*fbest + ((data-t_0)**2)*f1*0.5 + ((data-t_0)**3)*f2/6,1.0)
     p_num = np.histogram(phi,bin_profile)[0]
-    p_num = p_num/np.mean(p_num)
+#    p_num = p_num/np.mean(p_num)
     #p_num = p_num/(max(data)-min(data))
     p_num_x = np.arange(0.,bin_profile,1)/bin_profile
 
